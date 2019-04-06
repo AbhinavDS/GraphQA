@@ -4,13 +4,13 @@ import torch
 from torch.autograd import Variable
 
 class GCN(nn.Module):
-	def __init__(self, feature_size, depth, weights_init='xavier', kernel_size=5):
+	def __init__(self, params, weights_init='xavier'):
 		super(GCN, self).__init__()
-		self.feature_size = feature_size
-		self.layers = nn.ModuleList()
+		self.feature_size = params.feature_size
+		self.depth = params.depth
 		self.weights_init = weights_init
-		self.depth = depth
-		for i in range(depth):
+		self.layers = nn.ModuleList()
+		for i in range(self.depth):
 			self.add_layer(nn.Linear(self.feature_size,self.feature_size))
 			self.add_layer(nn.Linear(self.feature_size,self.feature_size))
 		self.a = nn.Tanh()
@@ -30,7 +30,12 @@ class GCN(nn.Module):
 		for i in range(0,len(self.layers),2):
 			# Implemented as ResNet
 			# Graph convolution: feature at object p = weighted feature at object p + sum of weighted features from the neighbours
+			# Use relational embedding when calculating features from neighbours, instead of just x
 			x = self.a(self.layers[i](x)+torch.bmm(temp_A,self.layers[i+1](x)) + x)
 		return x
 
-# A = GCN(128, 3).cuda()
+# import argparse
+# params = argparse.ArgumentParser()
+# params.feature_size = 128
+# params.depth = 3
+# A = GCN(params).cuda()
