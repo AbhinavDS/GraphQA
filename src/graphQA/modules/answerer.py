@@ -24,7 +24,7 @@ class Answerer(nn.Module):
 
 		combined_feats = torch.mul(gated_ques, gated_img)
 
-		ans_distrib = nn.Sigmoid(ans_linear(ans_gate(combined_feats)))
+		ans_distrib = ans_linear(ans_gate(combined_feats))
 
 		return ans_distrib
 
