@@ -4,14 +4,14 @@ import torch
 from torch.autograd import Variable
 
 class GCN(nn.Module):
-	def __init__(self, params, weights_init='xavier'):
+	def __init__(self, args):
 		super(GCN, self).__init__()
-		self.feature_size = params.feature_size
-		self.relation_embedding_size = params.relation_embedding_size
-		self.depth = params.depth
-		self.weights_init = weights_init
+		self.feature_size = args.feature_size
+		self.relation_embedding_size = args.relation_embedding_size
+		self.gcn_depth = args.gcn_depth
+		self.weights_init = args.weights_init
 		self.layers = nn.ModuleList()
-		for i in range(self.depth):
+		for i in range(self.gcn_depth):
 			self.add_layer(nn.Linear(self.feature_size,self.feature_size))
 			self.add_layer(nn.Linear(self.feature_size + self.relation_embedding_size, self.feature_size))
 		self.a = nn.Tanh()
@@ -43,8 +43,8 @@ class GCN(nn.Module):
 		return x
 
 # import argparse
-# params = argparse.ArgumentParser()
-# params.feature_size = 512
-# params.relation_embedding_size = 128
-# params.depth = 3
-# A = GCN(params).cuda()
+# args = argparse.ArgumentParser()
+# args.feature_size = 512
+# args.relation_embedding_size = 128
+# args.gcn_depth = 3
+# A = GCN(args).cuda()
