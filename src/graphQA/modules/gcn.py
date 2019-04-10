@@ -28,7 +28,7 @@ class GCN(nn.Module):
 	def forward(self, x, A):
 		#x: batch_size x O x n_img_feats (O = number of objects)
 		#A: batch_size x O x O (Adjacency Matrix)
-		temp_A = Variable(torch.Tensor(A).type(dtype),requires_grad=False)
+		temp_A = Variable(torch.Tensor(A).type(torch.cuda.FloatTensor),requires_grad=False)
 		for i in range(0, len(self.layers), 2):
 			# Implemented as ResNet
 			# Graph convolution: feature at object p = weighted feature at object p + sum of weighted features from the neighbours

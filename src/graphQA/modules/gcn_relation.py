@@ -34,7 +34,7 @@ class GCN(nn.Module):
 		# Use relational embedding when calculating features from neighbours, instead of just x
 		batch_size, objects, _ = x.size()
 		num_rel = R.size(0)
-		temp_A = Variable(torch.Tensor(A).type(dtype),requires_grad=False)
+		temp_A = Variable(torch.Tensor(A).type(torch.cuda.FloatTensor),requires_grad=False)
 		R_repeated = R.unsqueeze(0).unsqueeze(0).repeat(batch_size, objects, 1, 1)
 		for i in range(0,len(self.layers),2):
 			xr = torch.cat((x.unsqueeze(2).repeat(1, 1, num_rel, 1), R_repeated), 3)
