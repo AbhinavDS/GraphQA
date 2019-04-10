@@ -67,7 +67,7 @@ def main(args):
 		json.dump(vocab, f)
 
 	# Check if meta file exists
-	if os.exists(args.meta_vocab_json):
+	if os.path.exists(args.meta_vocab_json):
 		meta_vocab = utils.load_vocab(args.meta_vocab_json)
 		max_ques_len = meta_vocab['max_ques_len'] if max_ques_len < meta_vocab['max_ques_len'] else max_ques_len;
 	if meta_vocab is None:
