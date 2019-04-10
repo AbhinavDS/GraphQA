@@ -5,15 +5,16 @@ from torch.autograd import Variable
 
 class GCN(nn.Module):
 	def __init__(self, args):
+		
 		super(GCN, self).__init__()
-
-		self.feature_size = args.feature_size
+		
+		self.n_img_feats = args.n_img_feats
 		self.gcn_depth = args.gcn_depth
 		self.weights_init = args.weights_init
 		self.layers = nn.ModuleList()
 		for i in range(self.gcn_depth):
-			self.add_layer(nn.Linear(self.feature_size, self.feature_size))
-			self.add_layer(nn.Linear(self.feature_size, self.feature_size))
+			self.add_layer(nn.Linear(self.n_img_feats, self.n_img_feats))
+			self.add_layer(nn.Linear(self.n_img_feats, self.n_img_feats))
 		self.a = nn.Tanh()
 	
 	def add_layer(self,layer,init=True):
@@ -25,7 +26,7 @@ class GCN(nn.Module):
 				nn.init.constant_(self.layers[-1].weight,0)
 
 	def forward(self, x, A):
-		#x: batch_size x O x feature_size (O = number of objects)
+		#x: batch_size x O x n_img_feats (O = number of objects)
 		#A: batch_size x O x O (Adjacency Matrix)
 		temp_A = Variable(torch.Tensor(A).type(dtype),requires_grad=False)
 		for i in range(0, len(self.layers), 2):
@@ -37,6 +38,6 @@ class GCN(nn.Module):
 
 # import argparse
 # args = argparse.ArgumentParser()
-# args.feature_size = 128
+# args.n_img_feats = 128
 # args.gcn_depth = 3
 # A = GCN(args).cuda()

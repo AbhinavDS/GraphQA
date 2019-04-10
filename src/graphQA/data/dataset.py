@@ -11,24 +11,45 @@ class GQADataset(Dataset):
 
 	def __init__(self, question_json_path, scenegraph_json_path, image_features_path, image_info_json_path, vocab_json, relations_vocab_json, num_objects=150):
 		
-		q = open(question_json_path, 'r')
-		self.questions = json.load(q)
+		with open(question_json_path, 'r') as qf:
+			# Temporary Fix for Testings
+			t = json.load(qf)
+			self.questions = {}
+			for q in t:
+				if t[q]['types']['structural'] =='query':
+					self.questions[q] = t[q]
 		self.questions_keys = list(self.questions.keys())
-		q.close()
 		
-		sg = open(scenegraph_json_path, 'r')
-		self.scenegraphs = json.load(sg)
-		sg.close()	
-
-		info = open(image_info_json_path, 'r')
-		self.image_info = json.load(info)
-		info.close()	
+		with open(scenegraph_json_path, 'r') as sgf:
+			self.scenegraphs = json.load(sgf)
+		
+		with open(image_info_json_path, 'r') as img_if:
+			self.image_info = json.load(img_if)
+		
 		self.image_features_h5 = h5py.File(image_features_path, 'r')['features']
 		
 		self.vocab = utils.load_vocab(vocab_json)
 		self.relations_vocab = utils.load_vocab(relations_vocab_json)
 
 		self.num_objects = num_objects
+
+		print("Data Read successful", len(self.questions_keys))
+
+	def get_data_config(self):
+
+		"""
+		Returns the config variables wrt data in a dictionary format
+		"""
+
+		config = {}
+		config['max_num_objs'] = self.num_objects
+		config['max_ques_len'] = 256
+		config['max_rels'] = len(self.relations_vocab['relation_token_to_idx'])
+		config['variable_lengths'] = True
+		config['n_ans'] = len(self.vocab['answer_token_to_idx'])
+		config['ques_start_id'] = preprocess_utils.SPECIAL_TOKENS['<START>']
+		config['ques_end_id'] = preprocess_utils.SPECIAL_TOKENS['<END>']
+		return config
 
 	def __len__(self):
 		return len(self.questions)

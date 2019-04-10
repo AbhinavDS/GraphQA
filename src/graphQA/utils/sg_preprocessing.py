@@ -3,8 +3,8 @@ import argparse
 import json
 import numpy as np
 
-import preprocess as preprocess_utils
-import utils as utils
+from . import preprocess as preprocess_utils
+from . import utils as utils
 
 
 parser = argparse.ArgumentParser()

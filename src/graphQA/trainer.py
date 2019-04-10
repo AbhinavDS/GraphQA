@@ -9,7 +9,7 @@ from torch import nn
 import numpy as np
 from tensorboardX import SummaryWriter
 
-from models.bottom_up_gcn import BottomUpGCN
+from .models.bottom_up_gcn import BottomUpGCN
 
 class Trainer:
 
@@ -25,7 +25,8 @@ class Trainer:
 		# Can be changed to support different optimizers
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args.lr)
 		self.set_criterion()
-
+		self.lr = self.args.lr
+		
 		if args.log:
 			writer = SummaryWriter(args.log_dir)
 
@@ -65,14 +66,12 @@ class Trainer:
 				#num_obj = 
 				#ans_output = 
 
-				ans_distribbatch_loss = self.criterion(ans_distrib, ans_output)
-				loss += batch_loss = self.model(img_feats, ques, objs, adj_mat, rels, ques_lens, num_obj)
+				ans_distrib = self.model(img_feats, ques, objs, adj_mat, rels, ques_lens, num_obj)
 
 				batch_loss = self.criterion(ans_distrib, ans_output)
 				loss += batch_loss
 
 				train_accuracies.extend(get_accuracy(ans_distrib, ans_output))
-
 				self.model.backward()
 				self.optimizer.step()
 
@@ -138,7 +137,7 @@ class Trainer:
 	def check_restart_conditions(self):
 
 		# Check for the status file corresponding to the model
-		status_file = os.path.join(self.args.checkpoint_dir, 'status.json')
+		status_file = os.path.join(self.args.ckpt_dir, 'status.json')
 
 		if os.path.exists(status_file):
 			with open(status_file, 'r') as f:
@@ -151,7 +150,7 @@ class Trainer:
 
 	def write_status(self, epoch, best_val_acc):
 
-		status_file = os.path.join(self.args.checkpoint_dir, 'status.json')
+		status_file = os.path.join(self.args.ckpt_dir, 'status.json')
 		status = {'epoch': epoch, 'best_val_acc': best_val_acc}
 
 		with open(status_file, 'w') as f:
@@ -161,7 +160,7 @@ class Trainer:
 		
 		# Sets the learning rate to the initial LR decayed by 2 every learning_rate_decay_every epochs
 		
-		lr_tmp = lr * (0.5 ** (epoch // self.args.learning_rate_decay_every))
+		lr_tmp = self.lr * (0.5 ** (epoch // self.args.learning_rate_decay_every))
 		return lr_tmp
 
 	def set_criterion(self):

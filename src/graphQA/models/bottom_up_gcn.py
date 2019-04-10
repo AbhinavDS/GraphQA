@@ -5,7 +5,7 @@ Module that builds the Bottom Up Attention Model using Graph Convolutional Netwo
 import torch 
 from torch import nn as nn
 
-from ..modules.gcn_relation import GCN
+from ..modules.gcn import GCN
 from ..modules.non_linearity import NonLinearity
 from ..modules.attention import TopDownAttention
 
@@ -15,20 +15,21 @@ class BottomUpGCN(nn.Module):
 
 	def __init__(self, args):
 
+		super(BottomUpGCN, self).__init__()
+		
 		self.gcn = GCN(args)
-		self.ques_encoder = Seq2seqParser(args).seq2seq.encoder
+		#self.ques_encoder = Seq2seqParser(args).seq2seq.encoder
 		self.attn_layer = TopDownAttention(args)
-
-		self.ques_gate = NonLinearity(args.n_ques_emb, args.n_qi_gate)
-		self.img_gate = NonLinearity(args.n_img_feats, args.n_qi_gate)
-		self.ans_gate = NonLinearity(args.n_qi_gate, args.n_ans_gate)
+		self.nl = args.nl
+		self.ques_gate = NonLinearity(args.n_ques_emb, args.n_qi_gate, self.nl)
+		self.img_gate = NonLinearity(args.n_img_feats, args.n_qi_gate, self.nl)
+		self.ans_gate = NonLinearity(args.n_qi_gate, args.n_ans_gate, self.nl)
 		self.ans_linear = nn.Linear(args.n_ans_gate, args.n_ans)
 
 		self.max_ques_len = args.max_ques_len
 		self.max_rels = args.max_rels
-		self.max_num_obj = args.max_num_obj
+		self.max_num_objs = args.max_num_objs
 		self.bidirectional = args.bidirectional
-		self.nl = args.nl
 
 	def forward(self, img_feats, ques, objs, adj_mat, rels, ques_lens, num_obj):
 
@@ -49,7 +50,7 @@ class BottomUpGCN(nn.Module):
 		gcn_obj_feats = self.gcn(obj_feats, adj_mat, rels)
 
 		# Obtain Question Embedding
-		ques_output, ques_hidden = self.ques_encoder(ques, ques_lens)
+		#ques_output, ques_hidden = self.ques_encoder(ques, ques_lens)
 
 		if args.bidirectional:
 			ques_emb = torch.cat([ques_hidden[-2, :, :], ques_hidden[-1, :, :]], 1)
@@ -71,5 +72,5 @@ class BottomUpGCN(nn.Module):
 		return ans_distrib
 
 	def save_model(self):
-
+		pass
 		

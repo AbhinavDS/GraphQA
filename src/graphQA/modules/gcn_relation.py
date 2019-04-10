@@ -6,14 +6,14 @@ from torch.autograd import Variable
 class GCN(nn.Module):
 	def __init__(self, args):
 		super(GCN, self).__init__()
-		self.feature_size = args.feature_size
+		self.n_img_feats = args.n_img_feats
 		self.relation_embedding_size = args.relation_embedding_size
 		self.gcn_depth = args.gcn_depth
 		self.weights_init = args.weights_init
 		self.layers = nn.ModuleList()
 		for i in range(self.gcn_depth):
-			self.add_layer(nn.Linear(self.feature_size,self.feature_size))
-			self.add_layer(nn.Linear(self.feature_size + self.relation_embedding_size, self.feature_size))
+			self.add_layer(nn.Linear(self.n_img_feats,self.n_img_feats))
+			self.add_layer(nn.Linear(self.n_img_feats + self.relation_embedding_size, self.n_img_feats))
 		self.a = nn.Tanh()
 	
 	def add_layer(self,layer,init=True):
@@ -25,7 +25,7 @@ class GCN(nn.Module):
 				nn.init.constant_(self.layers[-1].weight,0)
 
 	def forward(self, x, A, R):
-		#x: batch_size x O x feature_size (O = number of objects, torch tensor)
+		#x: batch_size x O x n_img_feats (O = number of objects, torch tensor)
 		#A: batch_size x O x OR (Adjacency Matrix) numpy array
 		#R: R x embedding_size (rel_embeddings: torch tensor)
 
@@ -44,7 +44,7 @@ class GCN(nn.Module):
 
 # import argparse
 # args = argparse.ArgumentParser()
-# args.feature_size = 512
+# args.n_img_feats = 512
 # args.relation_embedding_size = 128
 # args.gcn_depth = 3
 # A = GCN(args).cuda()
