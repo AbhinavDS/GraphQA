@@ -37,8 +37,8 @@ def main(args):
 		print('Building vocab')
 		answer_token_to_idx = preprocess_utils.build_vocab((questions[key]['answer'] for key in questions.keys()), delim=None)
 		question_token_to_idx = preprocess_utils.build_vocab((questions[key]['question'] for key in questions.keys()),min_token_count=args.unk_threshold, punct_to_keep=[';', ','], punct_to_remove=['?', '.'])
-		question_len = len(preprocess_utils.tokenize(questions[key]['question'], punct_to_keep=[';', ','], punct_to_remove=['?', '.']))
-		max_ques_len = question_len if max_ques_len < question_len else max_ques_len;
+		question_lens = [len(preprocess_utils.tokenize(questions[key]['question'], punct_to_keep=[';', ','], punct_to_remove=['?', '.'])) for key in questions.keys()]
+		max_ques_len = max(question_lens);
 		vocab = {
 			'question_token_to_idx': question_token_to_idx,
 			'answer_token_to_idx': answer_token_to_idx,
