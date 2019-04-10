@@ -9,7 +9,7 @@ from ..modules.gcn import GCN
 from ..modules.non_linearity import NonLinearity
 from ..modules.attention import TopDownAttention
 
-from question_parse.models.parser import Seq2seqParser
+from question_parse.models.encoder import Encoder as QuesEncoder
 
 class BottomUpGCN(nn.Module):
 
@@ -18,7 +18,7 @@ class BottomUpGCN(nn.Module):
 		super(BottomUpGCN, self).__init__()
 		
 		self.gcn = GCN(args)
-		#self.ques_encoder = Seq2seqParser(args).seq2seq.encoder
+		self.ques_encoder = QuesEncoder(args.ques_vocab_sz, args.max_ques_len, args.ques_word_vec_dim, args.n_ques_emb, args.n_ques_layers, bidirectional=args.bidirectional, variable_lengths=args.variable_lengths)
 		self.attn_layer = TopDownAttention(args)
 		self.nl = args.nl
 		self.ques_gate = NonLinearity(args.n_ques_emb, args.n_qi_gate, self.nl)
@@ -70,7 +70,4 @@ class BottomUpGCN(nn.Module):
 		ans_distrib = self.ans_linear(self.ans_gate(combined_feats))
 
 		return ans_distrib
-
-	def save_model(self):
-		pass
 		

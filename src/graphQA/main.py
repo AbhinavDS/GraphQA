@@ -2,8 +2,6 @@
 Main module that controls the complete graph QA pipeline
 """
 
-from torch.utils.data import DataLoader
-
 from .config_parser import parse_args
 from .trainer import Trainer
 from .data.dataset import GQADataset
@@ -28,14 +26,11 @@ if __name__ == "__main__":
 		raise("Please specify the correct training mode")
 	
 	if args.mode == "train":
-		train_loader = DataLoader(dataset = train_dataset, batch_size=args.bsz, shuffle=True, num_workers=1)
-
-		val_loader = DataLoader(dataset=val_dataset, batch_size=args.bsz, shuffle=True, num_workers=1)
-		trainer = Trainer(args, train_loader, val_loader)
+		
+		trainer = Trainer(args, train_dataset, val_dataset)
 		trainer.train()
 	
 	elif args.mode == "eval":
-		val_loader = DataLoader(dataset=val_dataset, batch_size=args.bsz, shuffle=True, num_workers=1)
 		# Read the configs from the model
 		pass
 	

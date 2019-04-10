@@ -25,7 +25,7 @@ class NonLinearity(nn.Module):
 			g = nn.Sigmoid(self.g_layer(inp))
 			return torch.mul(y, g)
 		elif nl == 'relu':
-			return nn.ReLU(self.layer)
+			return nn.ReLU(self.layer(inp))
 		
 
 

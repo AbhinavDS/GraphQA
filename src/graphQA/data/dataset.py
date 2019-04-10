@@ -49,6 +49,7 @@ class GQADataset(Dataset):
 		config['n_ans'] = len(self.vocab['answer_token_to_idx'])
 		config['ques_start_id'] = preprocess_utils.SPECIAL_TOKENS['<START>']
 		config['ques_end_id'] = preprocess_utils.SPECIAL_TOKENS['<END>']
+		config['ques_vocab_sz'] = len(self.vocab['question_token_to_idx'])
 		return config
 
 	def __len__(self):
