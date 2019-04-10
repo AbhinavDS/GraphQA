@@ -3,21 +3,21 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 from . import create_seq2seq_net, get_vocab
-from ..utils import utils as utils
+import utils.utils as utils
 
 
 class Seq2seqParser():
     """Model interface for seq2seq parser"""
 
-    def __init__(self, opt, vocab):
+    def __init__(self, opt):
         self.opt = opt
-        # if opt.load_checkpoint_path is not None:
-        #     self.load_checkpoint(opt.load_checkpoint_path)
-        # else:
-        #     print('| creating new network')
-        
-        self.net_params = self._get_net_params(self.opt, self.vocab)
-        self.seq2seq = create_seq2seq_net(**self.net_params)
+        self.vocab = get_vocab(opt)
+        if opt.load_checkpoint_path is not None:
+            self.load_checkpoint(opt.load_checkpoint_path)
+        else:
+            print('| creating new network')
+            self.net_params = self._get_net_params(self.opt, self.vocab)
+            self.seq2seq = create_seq2seq_net(**self.net_params)
         self.variable_lengths = self.net_params['variable_lengths']
         self.end_id = self.net_params['end_id']
         self.gpu_ids = opt.gpu_ids
@@ -86,18 +86,17 @@ class Seq2seqParser():
     def _get_net_params(self, opt, vocab):
         net_params = {
             'input_vocab_size': len(vocab['question_token_to_idx']),
-            #'output_vocab_size': len(vocab['program_token_to_idx']),
-            'output_vocab_size': 30,
-            'hidden_size': opt.n_ques_emb,
-            'word_vec_dim': opt.ques_word_vec_dim,
-            'n_layers': opt.n_ques_layers,
+            'output_vocab_size': len(vocab['program_token_to_idx']),
+            'hidden_size': opt.hidden_size,
+            'word_vec_dim': opt.word_vec_dim,
+            'n_layers': opt.n_layers,
             'bidirectional': opt.bidirectional,
             'variable_lengths': opt.variable_lengths,
-            'use_attention': opt.use_ques_attention,
-            'encoder_max_len': opt.max_ques_len,
-            'decoder_max_len': opt.max_ques_len,
-            'start_id': opt.ques_start_id,
-            'end_id': opt.ques_end_id,
+            'use_attention': opt.use_attention,
+            'encoder_max_len': opt.encoder_max_len,
+            'decoder_max_len': opt.decoder_max_len,
+            'start_id': opt.start_id,
+            'end_id': opt.end_id,
             'word2vec_path': opt.word2vec_path,
             'fix_embedding': opt.fix_embedding,
         }

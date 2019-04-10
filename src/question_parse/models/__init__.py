@@ -1,7 +1,8 @@
 from .encoder import Encoder
 from .decoder import Decoder
 from .seq2seq import Seq2seq
-from ..utils import utils as utils
+import utils.utils as utils
+
 
 def get_vocab(opt):
     if opt.dataset == 'clevr':
