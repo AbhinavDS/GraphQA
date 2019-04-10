@@ -5,9 +5,7 @@ from .base_rnn import BaseRNN
 class Encoder(BaseRNN):
     """Encoder RNN module"""
     
-    def __init__(self, vocab_size, max_len, word_vec_dim, hidden_size, n_layers,
-                 input_dropout_p=0, dropout_p=0, bidirectional=False, rnn_cell='lstm',
-                 variable_lengths=False, word2vec=None, fix_embedding=False):
+    def __init__(self, vocab_size, max_len, word_vec_dim, hidden_size, n_layers, input_dropout_p=0, dropout_p=0, bidirectional=False, rnn_cell='lstm', variable_lengths=False, word2vec=None,fix_embedding=False):
         super(Encoder, self).__init__(vocab_size, max_len, hidden_size, input_dropout_p, dropout_p, n_layers, rnn_cell)
         self.variable_lengths = variable_lengths
         if word2vec is not None:

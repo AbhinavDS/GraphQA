@@ -22,6 +22,7 @@ class Config(object):
 		self.log_dir = os.path.join(self.expt_dir, 'logs')
 		self.ckpt_dir = os.path.join(self.expt_dir, 'ckpt')
 		self.create_dir(self.log_dir)
+		self.create_dir(self.ckpt_dir)
 
 	def set_config(self, config):
 		for key in config:

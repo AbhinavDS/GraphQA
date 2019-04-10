@@ -10,24 +10,30 @@ import numpy as np
 from tensorboardX import SummaryWriter
 
 from .models.bottom_up_gcn import BottomUpGCN
+from torch.utils.data import DataLoader
 
 class Trainer:
 
-	def __init__(self, args, train_loader, val_loader):
+	def __init__(self, args, train_dataset, val_dataset):
 
 		self.args = args
 		self.num_epochs = args.num_epochs
 		self.model = BottomUpGCN(args)
 		self.device = self.args.device
 
-		self.train_loader = train_loader
-		self.val_loader = val_loader
+		self.train_dataset = train_dataset
+		self.val_dataset = val_dataset
 		# Can be changed to support different optimizers
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args.lr)
 		self.set_criterion()
 		self.lr = self.args.lr
 		
-		if args.log:
+		self.train_loader = DataLoader(dataset = self.train_dataset, batch_size=self.args.bsz, shuffle=True, num_workers=1)
+
+		self.val_loader = DataLoader(dataset=self.val_dataset, batch_size=self.args.bsz, shuffle=True, num_workers=1)
+
+		self.log = args.log
+		if self.log:
 			writer = SummaryWriter(args.log_dir)
 
 	def train(self):
@@ -40,6 +46,7 @@ class Trainer:
 		if self.resume_from_epoch >= 1:
 			print('Loading from Checkpointed Model')
 			# Write the logic for loading checkpoint for the model
+			self.load_ckpt()
 		
 		self.model.to(self.device)
 
@@ -88,6 +95,7 @@ class Trainer:
 
 				print('Updating Best Model after Epoch: {}, Val Acc: {}'.format(epoch, val_acc))
 				# Initiate Model Checkpointing
+				self.save_ckpt()
 
 	
 	def eval(self):
@@ -171,3 +179,44 @@ class Trainer:
 			self.criterion = nn.CrossEntropyLoss()
 		else:
 			raise("Invalid loss criterion")
+
+	def log_stats(self, train_loss, val_loss, train_acc, val_acc, epoch):
+		
+		"""
+		Log the stats of the current
+		"""
+
+		if self.log:
+			writer.add_scalar('train/loss', train_loss, epoch)
+			writer.add_scalar('train/acc', train_acc, epoch)
+			writer.add_scalar('val/loss', val_loss, epoch)
+			writer.add_scalar('val/acc', val_acc, epoch)
+
+	def load_ckpt(self):
+		"""
+		Load the model checkpoint from the provided path
+		"""
+
+		model_name = self.model.__class__.__name__
+		ckpt_path = os.path.join(self.args.ckpt_dir, '{}.ckpt'.format(model_name))
+
+		ckpt = torch.load(ckpt_path)
+		self.model.load_state_dict(ckpt['state_dict'])
+
+	def save_ckpt(self):
+
+		"""
+		Saves the model checkpoint at the correct directory path
+		"""
+
+		model_name = self.model.__class__.__name__
+		ckpt_path = os.path.join(self.args.ckpt_dir, '{}.ckpt'.format(model_name))
+
+		# Maybe add more information to the checkpoint
+		model_dict = {
+			'state_dict': self.model.state_dict(),
+		}
+
+		torch.save(model_dict, ckpt_path)
+
+
