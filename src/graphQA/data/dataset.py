@@ -70,7 +70,7 @@ class GQADataset(Dataset):
 		ques_len = len(question_tokens)
 		question_encoded = preprocess_utils.encode(question_tokens,
 												 self.vocab['question_token_to_idx'],
-												 allow_unk=True)
+												 allow_unk=True, max_len=self.meta_vocab['max_ques_len'])
 		answer_encoded = preprocess_utils.encode([answer],
 												 self.vocab['answer_token_to_idx'],
 												 allow_unk=True)
