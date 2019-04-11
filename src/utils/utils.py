@@ -3,6 +3,13 @@ import json
 import numpy as np
 import torch
 
+def batch_roiproposals(rois):
+	bs, O, dim = rois.size()
+	append_id = np.zeros((bs,O,1), dtype=np.float64)
+	for i in range(bs):
+		append_id[i] = i
+	new_rois = torch.cat((torch.as_tensor(append_id), rois), dim=2)
+	return new_rois
 
 def mkdirs(paths):
 	if isinstance(paths, list):

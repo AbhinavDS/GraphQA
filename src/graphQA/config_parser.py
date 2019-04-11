@@ -57,6 +57,7 @@ def parse_args():
 	parser.add_argument('--rel_vocab_path', type=str, required=True, help="The path to relations vocabulary file")
 	parser.add_argument('--word_vocab_path', type=str, required=True, help="The path to word vocabulary file for question and answers")
 	parser.add_argument('--img_info_path', type=str, required=True, help="The path to JSON file Containing Image info")
+	parser.add_argument('--meta_vocab_path', type=str, required=True, help="The path to JSON file Containing Meta info")
 	
 	parser.add_argument('--mode', type=str, required=True, help="Specify the mode: {train, eval}")
 	parser.add_argument('--num_epochs', default=25, help="The number of epochs for training the model")
