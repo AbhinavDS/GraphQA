@@ -9,7 +9,7 @@ def batch_roiproposals(rois):
 	for i in range(bs):
 		append_id[i] = i
 	new_rois = torch.cat((torch.as_tensor(append_id), rois), dim=2)
-	return new_rois
+	return new_rois.unsqueeze(0)
 
 def mkdirs(paths):
 	if isinstance(paths, list):
