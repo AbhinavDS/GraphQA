@@ -4,8 +4,8 @@ import h5py
 import torch
 from torch.utils.data import Dataset
 
-import graphQA.utils.preprocess as preprocess_utils
-import graphQA.utils.utils as utils
+import utils.preprocess as preprocess_utils
+import utils.utils as utils
 
 class GQADataset(Dataset):
 

@@ -19,8 +19,22 @@ class Config(object):
 		else:
 			self.device = "cpu"
 
-		self.log_dir = os.path.join(self.expt_dir, 'logs')
-		self.ckpt_dir = os.path.join(self.expt_dir, 'ckpt')
+		self.dataset = 'balanced'
+		self.qa_data_path = {}
+		self.sg_data_path = {}
+		for mode in ['train', 'val', 'test']:
+			self.qa_data_path[mode] = os.path.join(self.expt_data_dir, '{dataset}_{mode}_data.json'.format(dataset=self.dataset, mode=mode))
+		for mode in ['train', 'val']:
+			self.sg_data_path[mode] = os.path.join(self.sg_data_dir, '{mode}_sceneGraphs.json'.format(mode=mode))
+		
+		self.img_feat_data_path = os.path.join(self.feats_data_dir, 'gqa_spatial.h5')
+		self.img_info_path = os.path.join(self.feats_data_dir, 'gqa_spatial_merged_info.json')
+		self.rel_vocab_path = os.path.join(self.expt_data_dir, 'sg_vocab.json')
+		self.word_vocab_path = os.path.join(self.expt_data_dir, 'qa_vocab.json')
+		self.meta_data_path = os.path.join(self.expt_data_dir, 'meta_data.json')
+
+		self.log_dir = os.path.join(self.expt_res_dir, 'logs')
+		self.ckpt_dir = os.path.join(self.expt_res_dir, 'ckpt')
 		self.create_dir(self.log_dir)
 		self.create_dir(self.ckpt_dir)
 
@@ -48,16 +62,10 @@ def parse_args():
 
 	# Experiment Related Options
 	parser.add_argument('--log', action="store_true", default=False, help="Whether to log the results or not")
-	parser.add_argument('--expt_dir', type=str, help="Path to directory where all the data related to the experiment will be stored")
-	parser.add_argument('--qa_data_path', type=str, help="The path of the json file containing the QA pairs")
-	parser.add_argument('--sc_data_path', type=str, help="The path of the json file containing the Scene Graph")
-	parser.add_argument('--img_feat_data_path', type=str, required=True, help="The path of the json file containing the Image Features")
-	parser.add_argument('--val_qa_data_path', type=str, required=True, help="The path of the json file containing the QA pairs for evaluation")
-	parser.add_argument('--val_sc_data_path', type=str, required=True, help="The path of the json file containing the Scene Graph for evaluation")
-	parser.add_argument('--rel_vocab_path', type=str, required=True, help="The path to relations vocabulary file")
-	parser.add_argument('--word_vocab_path', type=str, required=True, help="The path to word vocabulary file for question and answers")
-	parser.add_argument('--img_info_path', type=str, required=True, help="The path to JSON file Containing Image info")
-	parser.add_argument('--meta_vocab_path', type=str, required=True, help="The path to JSON file Containing Meta info")
+	parser.add_argument('--expt_res_dir', type=str, help="Path to directory where all the data related to the experiment will be stored")
+	parser.add_argument('--expt_data_dir', type=str, help="The path which contains most of the data required for the experiment")
+	parser.add_argument('--sg_data_dir', type=str, help="The path of the directory containing the scene sceneGraphs")
+	parser.add_argument('--feats_data_dir', type=str, help="The path of the directory containing image and object features")
 	
 	parser.add_argument('--mode', type=str, required=True, help="Specify the mode: {train, eval}")
 	parser.add_argument('--num_epochs', default=25, help="The number of epochs for training the model")

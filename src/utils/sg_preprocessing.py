@@ -8,25 +8,25 @@ from . import utils as utils
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--input_relations_json', required=True)
+parser.add_argument('--input_relations_path', required=True)
 parser.add_argument('--input_vocab_json', default='')
 parser.add_argument('--expand_vocab', default=0, type=int)
 parser.add_argument('--unk_threshold', default=0, type=int)
-parser.add_argument('--output_vocab_json', default='')
-parser.add_argument('--meta_vocab_json', default='')
+parser.add_argument('--output_vocab_path', default='')
+parser.add_argument('--meta_data_path', default='')
 
 
 def main(args):
-	if (args.output_vocab_json == ''):
-		print('Must give output_vocab_json')
+	if (args.output_vocab_path == ''):
+		print('Must give output_vocab_path')
 		return
 
-	if (args.meta_vocab_json == ''):
-		print('Must give meta_vocab_json')
+	if (args.meta_data_path == ''):
+		print('Must give meta_data_path')
 		return
 
 	print('Loading scene graph data')
-	with open(args.input_relations_json, 'r') as f:
+	with open(args.input_relations_path, 'r') as f:
 		scenegraphs = json.load(f)
 
 	max_num_objs = 0
@@ -67,20 +67,20 @@ def main(args):
 					num_new_words += 1
 			print('Found %d new words' % num_new_words)
 
-	utils.mkdirs(os.path.dirname(args.output_vocab_json))
-	with open(args.output_vocab_json, 'w') as f:
+	utils.mkdirs(os.path.dirname(args.output_vocab_path))
+	with open(args.output_vocab_path, 'w') as f:
 		json.dump(vocab, f)
 
 	# Check if meta file exists
-	if os.path.exists(args.meta_vocab_json):
-		meta_vocab = utils.load_vocab(args.meta_vocab_json)
+	if os.path.exists(args.meta_data_path):
+		meta_vocab = utils.load_vocab(args.meta_data_path)
 		meta_old = meta_vocab.get('max_num_objs',0)
 		max_num_objs = meta_old if max_num_objs < meta_old else max_num_objs;
 	if meta_vocab is None:
 		meta_vocab = {}
 	meta_vocab['max_num_objs'] = max_num_objs
-	utils.mkdirs(os.path.dirname(args.meta_vocab_json))
-	with open(args.meta_vocab_json, 'w') as f:
+	utils.mkdirs(os.path.dirname(args.meta_data_path))
+	with open(args.meta_data_path, 'w') as f:
 		json.dump(meta_vocab, f)
 
 if __name__ == '__main__':
