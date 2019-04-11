@@ -61,7 +61,7 @@ def build_vocab(sequences, min_token_count=1, delim=' ',
     return token_to_idx
 
 
-def encode(seq_tokens, token_to_idx, allow_unk=False, max_len):
+def encode(seq_tokens, token_to_idx, allow_unk=False, max_len=None):
     seq_idx = []
     for token in seq_tokens:
         if token not in token_to_idx:
