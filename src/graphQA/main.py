@@ -12,13 +12,13 @@ if __name__ == "__main__":
 	args.gen_config()
 
 	if args.mode == "train":
-		train_dataset = GQADataset(args.qa_data_path, args.sc_data_path, args.img_feat_data_path, args.img_info_path, args.word_vocab_path, args.rel_vocab_path)
-		val_dataset = GQADataset(args.val_qa_data_path, args.val_sc_data_path, args.img_feat_data_path, args.img_info_path, args.word_vocab_path, args.rel_vocab_path)
+		train_dataset = GQADataset(args.qa_data_path, args.sc_data_path, args.img_feat_data_path, args.img_info_path, args.word_vocab_path, args.rel_vocab_path, args.meta_vocab_path)
+		val_dataset = GQADataset(args.val_qa_data_path, args.val_sc_data_path, args.img_feat_data_path, args.img_info_path, args.word_vocab_path, args.rel_vocab_path, args.meta_vocab_path)
 
 		args.set_config(train_dataset.get_data_config())
 	
 	elif args.mode == "eval":
-		val_dataset = GQADataset(args.val_qa_data_path, args.val_sc_data_path, args.img_feat_data_path, args.img_info_path, args.word_vocab_path, args.rel_vocab_path)
+		val_dataset = GQADataset(args.val_qa_data_path, args.val_sc_data_path, args.img_feat_data_path, args.img_info_path, args.word_vocab_path, args.rel_vocab_path, args.meta_vocab_path)
 		
 		args.set_config(val_dataset.get_data_config())
 	

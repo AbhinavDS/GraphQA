@@ -64,14 +64,13 @@ class Trainer:
 				self.optimizer.zero_grad()
 
 				# Unpack the items from the batch tensor
-				#img_feats = batch['img_feats'].to(self.device)
-				#ques = batch['ques'].to(self.device)
-				#objs = 
-				#adj_mat = 
-				#rels = 
-				#ques_lens = 
-				#num_obj = 
-				#ans_output = 
+				img_feats = batch['image_feat'].to(self.device)
+				ques = batch['ques'].to(self.device)
+				objs = batch['obj_bboxes'].to(device)
+				adj_mat = batch['A'].to(device)
+				ques_lens = batch['ques_lens'].to(device) 
+				num_obj = batch['num_objs'].to(device) 
+				ans_output = batch['ans'].to(device)
 
 				ans_distrib = self.model(img_feats, ques, objs, adj_mat, rels, ques_lens, num_obj)
 
@@ -108,14 +107,13 @@ class Trainer:
 			self.model.eval()
 
 			# Unpack the items from the batch tensor
-			#img_feats = batch['img_feats'].to(self.device)
-			#ques = batch['ques'].to(self.device)
-			#objs = 
-			#adj_mat = 
-			#rels = 
-			#ques_lens = 
-			#num_obj = 
-			#ans_output =
+			img_feats = batch['image_feat'].to(self.device)
+			ques = batch['ques'].to(self.device)
+			objs = batch['obj_bboxes'].to(device)
+			adj_mat = batch['A'].to(device)
+			ques_lens = batch['ques_lens'].to(device) 
+			num_obj = batch['num_objs'].to(device) 
+			ans_output = batch['ans'].to(device)
 
 			ans_distrib = self.model(img_feats, ques, objs, adj_mat, rels, ques_lens, num_obj)
 			batch_loss = self.criterion(ans_distrib, ans_output)
