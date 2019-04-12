@@ -53,7 +53,7 @@ class BottomUpGCN(nn.Module):
 
 		# Obtain Object Features for the Image
 		rois = utils.batch_roiproposals(objs*6, self.device)# Change this later
-		obj_feats = roi_pooling_2d(img_feats, rois, self.roi_output_size).detach()
+		obj_feats = roi_pooling_2d(img_feats, rois, self.roi_output_size)#.detach()
 		obj_feats = self.avg_layer(obj_feats).view(objs.size(0), objs.size(1), -1)
 		gcn_obj_feats = self.gcn(obj_feats, adj_mat)
 

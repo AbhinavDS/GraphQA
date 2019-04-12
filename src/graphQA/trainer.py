@@ -28,9 +28,9 @@ class Trainer:
 		self.set_criterion()
 		self.lr = self.args.lr
 		
-		self.train_loader = DataLoader(dataset = self.train_dataset, batch_size=self.args.bsz, shuffle=True, num_workers=1)
+		self.train_loader = DataLoader(dataset = self.train_dataset, batch_size=self.args.bsz, shuffle=True, num_workers=4)
 
-		self.val_loader = DataLoader(dataset=self.val_dataset, batch_size=self.args.bsz, shuffle=True, num_workers=1)
+		self.val_loader = DataLoader(dataset=self.val_dataset, batch_size=self.args.bsz, shuffle=True, num_workers=4)
 
 		self.log = args.log
 		if self.log:
@@ -52,8 +52,6 @@ class Trainer:
 				
 		for epoch in range(self.resume_from_epoch, self.num_epochs):
 
-			torch.cuda.empty_cache()
-
 			lr = self.adjust_lr(epoch)
 			self.model.train()
 
@@ -66,7 +64,7 @@ class Trainer:
 				self.optimizer.zero_grad()
 
 				# Unpack the items from the batch tensor
-				ques_lens = batch['ques_lens']#.to(self.device)
+				ques_lens = batch['ques_lens'].to(self.device)
 				sorted_indices = torch.argsort(ques_lens, descending=True)
 				ques_lens = ques_lens[sorted_indices] 
 				img_feats = batch['image_feat'].to(self.device)[sorted_indices]
@@ -77,43 +75,41 @@ class Trainer:
 				ans_output = batch['ans'].to(self.device)[sorted_indices]
 				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
 
-				batch_loss = self.criterion(ans_distrib, ans_output.view(-1))
-				loss += batch_loss
+				batch_loss = self.criterion(ans_distrib, ans_output)
 
-				train_accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
 				batch_loss.backward()
 				self.optimizer.step()
+				loss += batch_loss.data
+				train_accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
 
 				if i % self.args.display_every == 0:
-					print('Epoch: {}, Iteration: {}, Loss: {}'.format(epoch, i, batch_loss))
+					print('Train Epoch: {}, Iteration: {}, Loss: {}'.format(epoch, i, batch_loss))
 
 			train_acc = np.mean(train_accuracies)
+			
 			val_loss, val_acc = self.eval()
 
 			self.log_stats(loss, val_loss, train_acc, val_acc, epoch)
-
+			print('Valid Epoch: {}, Val Acc: {}'.format(epoch, val_acc))
 			if val_acc > self.best_val_acc:
+				print('Saving new model. Better than previous accuracy: {}'.format(self.best_val_acc))
 				self.best_val_acc = val_acc
-
-				print('Updating Best Model after Epoch: {}, Val Acc: {}'.format(epoch, val_acc))
 				# Initiate Model Checkpointing
 				self.save_ckpt()
 				self.write_status(epoch, self.best_val_acc)
-
+			else:
+				print ('Not saving model.')
 	
 	def eval(self):
 
 		loss = 0.0
 		accuracies = []
 
-		#self.model.to(self.device)
-
+		self.model.eval()
 		for i, batch in enumerate(self.val_loader):
 
-			self.model.eval()
-
 			# Unpack the items from the batch tensor
-			ques_lens = batch['ques_lens']#.to(self.device)
+			ques_lens = batch['ques_lens'].to(self.device)
 			sorted_indices = torch.argsort(ques_lens, descending=True)
 			ques_lens = ques_lens[sorted_indices] 
 			img_feats = batch['image_feat'].to(self.device)[sorted_indices]
@@ -124,8 +120,8 @@ class Trainer:
 			ans_output = batch['ans'].to(self.device)[sorted_indices]
 
 			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
-			batch_loss = self.criterion(ans_distrib, ans_output.view(-1))
-			loss += batch_loss
+			batch_loss = self.criterion(ans_distrib, ans_output)
+			loss += batch_loss.data
 
 			accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
 
@@ -143,11 +139,11 @@ class Trainer:
 			# correct is in form of one hot vector
 			correct_ids = np.argmax(correct.cpu().numpy(), axis = -1)
 		elif self.args.criterion == "xce":
-			correct_ids = correct.cpu().numpy().reshape(-1)
+			correct_ids = correct.cpu().numpy()
 		else:
 			raise("Incorrect Loss function to compute accuracy for")
 
-		acc = np.equal(pred_ids.reshape(-1), correct_ids.reshape(-1))
+		acc = np.equal(pred_ids.reshape(-1), correct_ids)
 		return acc
 	
 	def check_restart_conditions(self):
@@ -205,6 +201,8 @@ class Trainer:
 		Load the model checkpoint from the provided path
 		"""
 
+		# TODO: Maybe load args as well from the checkpoint
+
 		model_name = self.model.__class__.__name__
 		ckpt_path = os.path.join(self.args.ckpt_dir, '{}.ckpt'.format(model_name))
 
@@ -223,6 +221,7 @@ class Trainer:
 		# Maybe add more information to the checkpoint
 		model_dict = {
 			'state_dict': self.model.state_dict(),
+			'args': self.args
 		}
 
 		torch.save(model_dict, ckpt_path)

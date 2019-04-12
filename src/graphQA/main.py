@@ -12,27 +12,19 @@ if __name__ == "__main__":
 	args.gen_config()
 
 	if args.mode == "train":
-		train_dataset = GQADataset(args.qa_data_path['val'], args.sg_data_path['train'], args.img_feat_data_path, args.img_info_path, args.word_vocab_path, args.rel_vocab_path, args.meta_data_path)
-		val_dataset = GQADataset(args.qa_data_path['val'], args.sg_data_path['train'], args.img_feat_data_path, args.img_info_path, args.word_vocab_path, args.rel_vocab_path, args.meta_data_path)
+		train_dataset = GQADataset(args, qa_data_key='train', sg_data_key='train')
+		val_dataset = GQADataset(args, qa_data_key='val', sg_data_key='train')
 
 		args.set_config(train_dataset.get_data_config())
-	
-	elif args.mode == "eval":
-		val_dataset = GQADataset(args.qa_data_path['test'], args.sg_data_path['val'], args.img_feat_data_path, args.img_info_path, args.word_vocab_path, args.rel_vocab_path, args.meta_data_path)
-				
-		args.set_config(val_dataset.get_data_config())
-	
-	else:
-		raise("Please specify the correct training mode")
-	
-	if args.mode == "train":
-		
+
 		trainer = Trainer(args, train_dataset, val_dataset)
 		trainer.train()
 	
 	elif args.mode == "eval":
-		# Read the configs from the model
-		pass
+		val_dataset = GQADataset(args, qa_data_key='test', sg_data_key='val')
+		args.set_config(val_dataset.get_data_config())
+
+		#Invoke the Evaluator Module here
 	
 	else:
-		raise("Specify correct operating Mode") 
+		raise("Please specify the correct training mode")
