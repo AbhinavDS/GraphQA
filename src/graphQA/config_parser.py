@@ -24,8 +24,7 @@ class Config(object):
 		self.sg_data_path = {}
 		for mode in ['train', 'val', 'test']:
 			self.qa_data_path[mode] = os.path.join(self.expt_data_dir, '{dataset}_{mode}_data.json'.format(dataset=self.dataset, mode=mode))
-		for mode in ['train', 'val']:
-			self.sg_data_path[mode] = os.path.join(self.sg_data_dir, '{mode}_sceneGraphs.json'.format(mode=mode))
+			self.sg_data_path[mode] = os.path.join(self.expt_data_dir, '{mode}_sceneGraphs.json'.format(mode=mode))
 		
 		self.img_feat_data_path = os.path.join(self.feats_data_dir, 'gqa_spatial.h5')
 		self.img_info_path = os.path.join(self.feats_data_dir, 'gqa_spatial_merged_info.json')
@@ -64,7 +63,6 @@ def parse_args():
 	parser.add_argument('--log', action="store_true", default=False, help="Whether to log the results or not")
 	parser.add_argument('--expt_res_dir', type=str, help="Path to directory where all the data related to the experiment will be stored")
 	parser.add_argument('--expt_data_dir', type=str, help="The path which contains most of the data required for the experiment")
-	parser.add_argument('--sg_data_dir', type=str, help="The path of the directory containing the scene sceneGraphs")
 	parser.add_argument('--feats_data_dir', type=str, help="The path of the directory containing image and object features")
 	
 	parser.add_argument('--mode', type=str, required=True, help="Specify the mode: {train, eval}")
@@ -75,7 +73,8 @@ def parse_args():
 	parser.add_argument('--bsz', default=32, help="Batch Size")
 	parser.add_argument('--use_cuda', action="store_true", default=False, help="Flag to use CUDA")
 	parser.add_argument('--display_every', type=int, default=1, help="Loss statistics to display after every n batches")
-
+	parser.add_argument('--drop_prob', default=0.3, help="Dropout probability for all linear layers")
+	
 	parser.add_argument('--nl', default='relu', help="Type of Non linearity to be used in the network (relu, gated_tanh)")
 
 	# Options for Question Encoder

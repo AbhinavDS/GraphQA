@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
 	if args.mode == "train":
 		train_dataset = GQADataset(args, qa_data_key='train', sg_data_key='train')
-		val_dataset = GQADataset(args, qa_data_key='val', sg_data_key='train')
+		val_dataset = GQADataset(args, qa_data_key='val', sg_data_key='val')
 
 		args.set_config(train_dataset.get_data_config())
 
@@ -21,7 +21,7 @@ if __name__ == "__main__":
 		trainer.train()
 	
 	elif args.mode == "eval":
-		val_dataset = GQADataset(args, qa_data_key='test', sg_data_key='val')
+		val_dataset = GQADataset(args, qa_data_key='test', sg_data_key='test')
 		args.set_config(val_dataset.get_data_config())
 
 		#Invoke the Evaluator Module here
