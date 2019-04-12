@@ -34,7 +34,7 @@ class Trainer:
 
 		self.log = args.log
 		if self.log:
-			writer = SummaryWriter(args.log_dir)
+			self.writer = SummaryWriter(args.log_dir)
 
 	def train(self):
 
@@ -47,10 +47,12 @@ class Trainer:
 			print('Loading from Checkpointed Model')
 			# Write the logic for loading checkpoint for the model
 			self.load_ckpt()
-		
-		self.model.to(self.device)
 
+		self.model.to(self.device)
+				
 		for epoch in range(self.resume_from_epoch, self.num_epochs):
+
+			torch.cuda.empty_cache()
 
 			lr = self.adjust_lr(epoch)
 			self.model.train()
@@ -64,30 +66,31 @@ class Trainer:
 				self.optimizer.zero_grad()
 
 				# Unpack the items from the batch tensor
-				img_feats = batch['image_feat'].to(self.device)
-				ques = batch['ques'].to(self.device)
-				objs = batch['obj_bboxes'].to(device)
-				adj_mat = batch['A'].to(device)
-				ques_lens = batch['ques_lens'].to(device) 
-				num_obj = batch['num_objs'].to(device) 
-				ans_output = batch['ans'].to(device)
+				ques_lens = batch['ques_lens']#.to(self.device)
+				sorted_indices = torch.argsort(ques_lens, descending=True)
+				ques_lens = ques_lens[sorted_indices] 
+				img_feats = batch['image_feat'].to(self.device)[sorted_indices]
+				ques = batch['ques'].to(self.device)[sorted_indices]
+				objs = batch['obj_bboxes'].to(self.device)[sorted_indices]
+				adj_mat = batch['A'].to(self.device)[sorted_indices]
+				num_obj = batch['num_objs'].to(self.device)[sorted_indices] 
+				ans_output = batch['ans'].to(self.device)[sorted_indices]
+				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
 
-				ans_distrib = self.model(img_feats, ques, objs, adj_mat, rels, ques_lens, num_obj)
-
-				batch_loss = self.criterion(ans_distrib, ans_output)
+				batch_loss = self.criterion(ans_distrib, ans_output.view(-1))
 				loss += batch_loss
 
-				train_accuracies.extend(get_accuracy(ans_distrib, ans_output))
-				self.model.backward()
+				train_accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
+				batch_loss.backward()
 				self.optimizer.step()
 
 				if i % self.args.display_every == 0:
 					print('Epoch: {}, Iteration: {}, Loss: {}'.format(epoch, i, batch_loss))
 
 			train_acc = np.mean(train_accuracies)
-			val_loss, val_acc = eval()
+			val_loss, val_acc = self.eval()
 
-			self.log_stats(loss, val_loss, train_acc, val_acc)
+			self.log_stats(loss, val_loss, train_acc, val_acc, epoch)
 
 			if val_acc > self.best_val_acc:
 				self.best_val_acc = val_acc
@@ -95,6 +98,7 @@ class Trainer:
 				print('Updating Best Model after Epoch: {}, Val Acc: {}'.format(epoch, val_acc))
 				# Initiate Model Checkpointing
 				self.save_ckpt()
+				self.write_status(epoch, self.best_val_acc)
 
 	
 	def eval(self):
@@ -102,24 +106,28 @@ class Trainer:
 		loss = 0.0
 		accuracies = []
 
-		for i, batch in enumerate(self.data_loader):
+		#self.model.to(self.device)
+
+		for i, batch in enumerate(self.val_loader):
 
 			self.model.eval()
 
 			# Unpack the items from the batch tensor
-			img_feats = batch['image_feat'].to(self.device)
-			ques = batch['ques'].to(self.device)
-			objs = batch['obj_bboxes'].to(device)
-			adj_mat = batch['A'].to(device)
-			ques_lens = batch['ques_lens'].to(device) 
-			num_obj = batch['num_objs'].to(device) 
-			ans_output = batch['ans'].to(device)
+			ques_lens = batch['ques_lens']#.to(self.device)
+			sorted_indices = torch.argsort(ques_lens, descending=True)
+			ques_lens = ques_lens[sorted_indices] 
+			img_feats = batch['image_feat'].to(self.device)[sorted_indices]
+			ques = batch['ques'].to(self.device)[sorted_indices]
+			objs = batch['obj_bboxes'].to(self.device)[sorted_indices]
+			adj_mat = batch['A'].to(self.device)[sorted_indices]
+			num_obj = batch['num_objs'].to(self.device)[sorted_indices] 
+			ans_output = batch['ans'].to(self.device)[sorted_indices]
 
-			ans_distrib = self.model(img_feats, ques, objs, adj_mat, rels, ques_lens, num_obj)
-			batch_loss = self.criterion(ans_distrib, ans_output)
+			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
+			batch_loss = self.criterion(ans_distrib, ans_output.view(-1))
 			loss += batch_loss
 
-			accuracies.extend(get_accuracy(ans_distrib, ans_output))
+			accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
 
 		return loss, np.mean(accuracies)
 
@@ -128,17 +136,19 @@ class Trainer:
 		"""
 		Compute the average accuracy of predictions wrt correct
 		"""
-		pred_ids = np.argmax(preds.data.cpu().numpy(), axis = -1)
+		
+		pred_ids = np.argmax(preds.detach().cpu().numpy(), axis = -1)
 
 		if self.args.criterion == "bce":
 			# correct is in form of one hot vector
-			correct_ids = np.argmax(correct.data.cpu().numpy(), axis = -1)
+			correct_ids = np.argmax(correct.cpu().numpy(), axis = -1)
 		elif self.args.criterion == "xce":
-			correct_ids = correct.data.cpu().numpy()
+			correct_ids = correct.cpu().numpy().reshape(-1)
 		else:
 			raise("Incorrect Loss function to compute accuracy for")
 
-		return np.equal(pred_ids, correct_ids)
+		acc = np.equal(pred_ids.reshape(-1), correct_ids.reshape(-1))
+		return acc
 	
 	def check_restart_conditions(self):
 
@@ -185,10 +195,10 @@ class Trainer:
 		"""
 
 		if self.log:
-			writer.add_scalar('train/loss', train_loss, epoch)
-			writer.add_scalar('train/acc', train_acc, epoch)
-			writer.add_scalar('val/loss', val_loss, epoch)
-			writer.add_scalar('val/acc', val_acc, epoch)
+			self.writer.add_scalar('train/loss', train_loss, epoch)
+			self.writer.add_scalar('train/acc', train_acc, epoch)
+			self.writer.add_scalar('val/loss', val_loss, epoch)
+			self.writer.add_scalar('val/acc', val_acc, epoch)
 
 	def load_ckpt(self):
 		"""

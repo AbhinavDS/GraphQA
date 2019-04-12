@@ -12,12 +12,8 @@ class GQADataset(Dataset):
 	def __init__(self, question_json_path, scenegraph_json_path, image_features_path, image_info_json_path, vocab_json, relations_vocab_json, meta_vocab_json):
 		
 		with open(question_json_path, 'r') as qf:
-			# Temporary Fix for Testings
-			t = json.load(qf)
-			self.questions = {}
-			for q in t:
-				if t[q]['types']['structural'] =='query':
-					self.questions[q] = t[q]
+			self.questions = json.load(qf)
+
 		self.questions_keys = list(self.questions.keys())
 		
 		with open(scenegraph_json_path, 'r') as sgf:
@@ -135,7 +131,7 @@ class GQADataset(Dataset):
 		return {
 				'ques': torch.as_tensor(question_encoded, dtype=torch.long),
 				'ans': torch.as_tensor(answer_encoded, dtype=torch.long),
-				'ques_len': ques_len,
+				'ques_lens': ques_len,
 				'obj_bboxes': torch.as_tensor(objects, dtype=torch.float),
 				'num_objs': num_objs,
 				'A': torch.as_tensor(A, dtype=torch.float),

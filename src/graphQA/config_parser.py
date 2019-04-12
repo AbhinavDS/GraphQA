@@ -68,12 +68,13 @@ def parse_args():
 	parser.add_argument('--feats_data_dir', type=str, help="The path of the directory containing image and object features")
 	
 	parser.add_argument('--mode', type=str, required=True, help="Specify the mode: {train, eval}")
-	parser.add_argument('--num_epochs', default=25, help="The number of epochs for training the model")
-	parser.add_argument('--criterion', default="bce", help="The loss criterion to be used for training the model")
+	parser.add_argument('--num_epochs', default=10, help="The number of epochs for training the model")
+	parser.add_argument('--criterion', default="xce", help="The loss criterion to be used for training the model")
 	parser.add_argument('--learning_rate_decay_every', type=int, default=30, help="The schedule after which the learning is decayed by half")
 	parser.add_argument('--lr', default=1e-3, help="The learning rate for training the architecture")
 	parser.add_argument('--bsz', default=32, help="Batch Size")
 	parser.add_argument('--use_cuda', action="store_true", default=False, help="Flag to use CUDA")
+	parser.add_argument('--display_every', type=int, default=1, help="Loss statistics to display after every n batches")
 
 	parser.add_argument('--nl', default='relu', help="Type of Non linearity to be used in the network (relu, gated_tanh)")
 
@@ -87,7 +88,7 @@ def parse_args():
 	# Options for Image Model
 	parser.add_argument('--n_img_feats', type=int, default=2048, help="The dimension of the Image Features")
 	parser.add_argument('--weights_init', default='xavier', help="The initializer for weight matrices in the network")
-	parser.add_argument('--gcn_depth', default=8, type=int, help="The depth of the GCN network")
+	parser.add_argument('--gcn_depth', default=2, type=int, help="The depth of the GCN network")
 	parser.add_argument('--rel_emb_dim', default=128, type=int, help="The dimensionality of the relation embedding")
 
 	# Options for Answering Model

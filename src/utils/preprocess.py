@@ -71,7 +71,7 @@ def encode(seq_tokens, token_to_idx, allow_unk=False, max_len=None):
                 raise KeyError('Token "%s" not in vocab' % token)
         seq_idx.append(token_to_idx[token])
     if max_len is not None:
-        seq_idx.extend([-1]*(max_len-len(seq_idx))) 
+        seq_idx.extend([SPECIAL_TOKENS['<NULL>']]*(max_len-len(seq_idx))) 
     return seq_idx
 
 

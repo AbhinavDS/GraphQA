@@ -18,6 +18,8 @@ import cupy
 import torch
 from string import Template
 
+cupy.cuda.set_allocator(None)
+cupy.cuda.set_pinned_memory_allocator(None)
 
 Stream = namedtuple('Stream', ['ptr'])
 

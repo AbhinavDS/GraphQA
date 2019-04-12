@@ -32,21 +32,21 @@ class TopDownAttention(nn.Module):
 		@return: A single image feature attended over all objects. Size: (B*F1)
 		"""
 
-		batch_sz = ques_feats.size(0)
-
-		obj_mask = torch.Tensor(batch_sz, max_num_objs).to(self.device)
-
-		for i in range(max_num_objs):
-			obj_mask[:, i] = (i >= num_obj)
-
-		# Computing attention
-		gated_attn = self.attn_gate(torch.cat((obj_feats, ques_emb.repeat(1, max_num_objs).reshape(batch_sz, max_num_objs, -1)), 2))
-
-		attn_wt = self.attn_softmax(self.attn_layer(gated_attn))
+		batch_sz = ques_emb.size(0)
 		
-		attn_wt.data.masked_fill_(obj_mask, -float("inf"))
+		obj_mask = torch.zeros(batch_sz, self.max_num_objs).type(torch.ByteTensor).to(self.device)
 
-		return torch.bmm(attn_wt.unsqueeze(1), img_feats).squeeze(1)
+		for i in range(self.max_num_objs):
+			obj_mask[:, i] = (i >= num_obj)
+		
+		# Computing attention
+		gated_attn = self.attn_gate(torch.cat((obj_feats, ques_emb.repeat(1, self.max_num_objs).reshape(batch_sz, self.max_num_objs, -1)), 2))
+
+		attn_layer_out = self.attn_layer(gated_attn).squeeze(2)
+		attn_layer_out = attn_layer_out.data.masked_fill_(obj_mask, -float("inf"))
+		attn_wt = self.attn_softmax(attn_layer_out)
+		
+		return torch.bmm(attn_wt.unsqueeze(1), obj_feats).squeeze(1)
 
 
 

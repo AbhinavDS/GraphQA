@@ -10,6 +10,8 @@ from ..modules.non_linearity import NonLinearity
 from ..modules.attention import TopDownAttention
 
 from question_parse.models.encoder import Encoder as QuesEncoder
+from roi_pooling.functions.roi_pooling import roi_pooling_2d
+import utils.utils as utils
 
 class BottomUpGCN(nn.Module):
 
@@ -17,6 +19,7 @@ class BottomUpGCN(nn.Module):
 
 		super(BottomUpGCN, self).__init__()
 		
+
 		self.gcn = GCN(args)
 		self.ques_encoder = QuesEncoder(args.ques_vocab_sz, args.max_ques_len, args.ques_word_vec_dim, args.n_ques_emb, args.n_ques_layers, bidirectional=args.bidirectional, variable_lengths=args.variable_lengths)
 		self.attn_layer = TopDownAttention(args)
@@ -25,13 +28,18 @@ class BottomUpGCN(nn.Module):
 		self.img_gate = NonLinearity(args.n_img_feats, args.n_qi_gate, self.nl)
 		self.ans_gate = NonLinearity(args.n_qi_gate, args.n_ans_gate, self.nl)
 		self.ans_linear = nn.Linear(args.n_ans_gate, args.n_ans)
+		if args.bidirectional:
+			self.ques_proj = nn.Linear(2*args.n_ques_emb, args.n_ques_emb)
 
 		self.max_ques_len = args.max_ques_len
 		self.max_rels = args.max_rels
 		self.max_num_objs = args.max_num_objs
 		self.bidirectional = args.bidirectional
+		self.roi_output_size = (3,3)
+		self.avg_layer = nn.AvgPool2d(self.roi_output_size)
+		self.device = args.device
 
-	def forward(self, img_feats, ques, objs, adj_mat, rels, ques_lens, num_obj):
+	def forward(self, img_feats, ques, objs, adj_mat, ques_lens, num_obj):
 
 		"""
 		@param img_feats: The image features for the corresponding image of each sample. (batch_size, n_channels, width, height)
@@ -44,16 +52,17 @@ class BottomUpGCN(nn.Module):
 		"""
 
 		# Obtain Object Features for the Image
-		# TODO: write the RoI function to extract object features
-		# obj_feats = roi(img_feats)
-
-		gcn_obj_feats = self.gcn(obj_feats, adj_mat, rels)
+		rois = utils.batch_roiproposals(objs*6, self.device)# Change this later
+		obj_feats = roi_pooling_2d(img_feats, rois, self.roi_output_size).detach()
+		obj_feats = self.avg_layer(obj_feats).view(objs.size(0), objs.size(1), -1)
+		gcn_obj_feats = self.gcn(obj_feats, adj_mat)
 
 		# Obtain Question Embedding
-		#ques_output, ques_hidden = self.ques_encoder(ques, ques_lens)
-
-		if args.bidirectional:
+		ques_output, (ques_hidden, _) = self.ques_encoder(ques, ques_lens)
+		
+		if self.bidirectional:
 			ques_emb = torch.cat([ques_hidden[-2, :, :], ques_hidden[-1, :, :]], 1)
+			ques_emb = self.ques_proj(ques_emb)
 		else:
 			ques_emb = ques_hidden[-1, :, :]
 

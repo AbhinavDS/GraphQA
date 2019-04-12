@@ -10,3 +10,4 @@
 9. Need to set the defaults carefully
 10. Create a Mapping Config for question_parse
 11. Create Dropout Layers
+12. Verify all modules logically

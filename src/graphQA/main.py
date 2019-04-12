@@ -12,7 +12,7 @@ if __name__ == "__main__":
 	args.gen_config()
 
 	if args.mode == "train":
-		train_dataset = GQADataset(args.qa_data_path['train'], args.sg_data_path['train'], args.img_feat_data_path, args.img_info_path, args.word_vocab_path, args.rel_vocab_path, args.meta_data_path)
+		train_dataset = GQADataset(args.qa_data_path['val'], args.sg_data_path['train'], args.img_feat_data_path, args.img_info_path, args.word_vocab_path, args.rel_vocab_path, args.meta_data_path)
 		val_dataset = GQADataset(args.qa_data_path['val'], args.sg_data_path['train'], args.img_feat_data_path, args.img_info_path, args.word_vocab_path, args.rel_vocab_path, args.meta_data_path)
 
 		args.set_config(train_dataset.get_data_config())

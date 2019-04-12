@@ -17,7 +17,7 @@ FEATURES_DIR="${DATA_DIR}/features/"
 SPLIT='balanced'
 
 cd src/
-#python -m utils.filter_data --dataset $SPLIT --inp_data_dir $QA_DIR --out_data_dir $OUT_DATA_DIR --pct $PCT
+python -m utils.filter_data --dataset $SPLIT --inp_data_dir $QA_DIR --out_data_dir $OUT_DATA_DIR --pct $PCT
 
 # Do the necessary preprocessing required by the network architecture
 python -m utils.qa_preprocessing --input_questions_path "${OUT_DATA_DIR}/${SPLIT}_train_data.json" --output_vocab_path "${OUT_DATA_DIR}/qa_vocab.json" --meta_data_path "${OUT_DATA_DIR}/meta_data.json"
