@@ -22,11 +22,12 @@ class BottomUpGCN(nn.Module):
 
 		self.gcn = GCN(args)
 		self.ques_encoder = QuesEncoder(args.ques_vocab_sz, args.max_ques_len, args.ques_word_vec_dim, args.n_ques_emb, args.n_ques_layers, input_dropout_p=args.drop_prob, dropout_p=args.drop_prob, bidirectional=args.bidirectional, variable_lengths=args.variable_lengths)
+		self.dropout_layer = nn.Dropout(p=args.drop_prob)
 		self.attn_layer = TopDownAttention(args)
 		self.nl = args.nl
-		self.ques_gate = NonLinearity(args.n_ques_emb, args.n_qi_gate, self.nl)
-		self.img_gate = NonLinearity(args.n_img_feats, args.n_qi_gate, self.nl)
-		self.ans_gate = NonLinearity(args.n_qi_gate, args.n_ans_gate, self.nl)
+		self.ques_gate = NonLinearity(args.n_ques_emb, args.n_qi_gate, args.nl, args.drop_prob)
+		self.img_gate = NonLinearity(args.n_img_feats, args.n_qi_gate, args.nl,args.drop_prob)
+		self.ans_gate = NonLinearity(args.n_qi_gate, args.n_ans_gate, args.nl, args.drop_prob)
 		self.ans_linear = nn.Linear(args.n_ans_gate, args.n_ans)
 		if args.bidirectional:
 			self.ques_proj = nn.Linear(2*args.n_ques_emb, args.n_ques_emb)
@@ -52,7 +53,7 @@ class BottomUpGCN(nn.Module):
 		"""
 
 		# Obtain Object Features for the Image
-		rois = utils.batch_roiproposals(objs*6, self.device)# Change this later
+		rois = utils.batch_roiproposals(objs, self.device)# Change this later
 		obj_feats = roi_pooling_2d(img_feats, rois, self.roi_output_size)#.detach()
 		obj_feats = self.avg_layer(obj_feats).view(objs.size(0), objs.size(1), -1)
 		gcn_obj_feats = self.gcn(obj_feats, adj_mat)
@@ -62,7 +63,7 @@ class BottomUpGCN(nn.Module):
 		
 		if self.bidirectional:
 			ques_emb = torch.cat([ques_hidden[-2, :, :], ques_hidden[-1, :, :]], 1)
-			ques_emb = self.ques_proj(ques_emb)
+			ques_emb = self.dropout(self.ques_proj(ques_emb))
 		else:
 			ques_emb = ques_hidden[-1, :, :]
 

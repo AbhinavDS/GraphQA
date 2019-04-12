@@ -16,9 +16,8 @@ class TopDownAttention(nn.Module):
 		super(TopDownAttention, self).__init__()
 
 		# Doubt on what to set
-		self.nl = args.nl
 		self.attn_layer = nn.Linear(args.n_attn, 1)
-		self.attn_gate = NonLinearity(args.n_img_feats + args.n_ques_emb, args.n_attn, self.nl)
+		self.attn_gate = NonLinearity(args.n_img_feats + args.n_ques_emb, args.n_attn, args.nl, args.drop_prob)
 		self.attn_softmax = nn.Softmax(dim=1)
 		self.device = args.device
 		self.max_num_objs = args.max_num_objs

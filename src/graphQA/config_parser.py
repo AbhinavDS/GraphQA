@@ -72,8 +72,8 @@ def parse_args():
 	parser.add_argument('--lr', default=1e-3, help="The learning rate for training the architecture")
 	parser.add_argument('--bsz', default=32, help="Batch Size")
 	parser.add_argument('--use_cuda', action="store_true", default=False, help="Flag to use CUDA")
-	parser.add_argument('--display_every', type=int, default=1, help="Loss statistics to display after every n batches")
-	parser.add_argument('--drop_prob', default=0.3, help="Dropout probability for all linear layers")
+	parser.add_argument('--display_every', type=int, default=10, help="Loss statistics to display after every n batches")
+	parser.add_argument('--drop_prob', default=0.0, help="Dropout probability for all linear layers")
 	
 	parser.add_argument('--nl', default='relu', help="Type of Non linearity to be used in the network (relu, gated_tanh)")
 
@@ -82,17 +82,16 @@ def parse_args():
 	parser.add_argument('--ques_word_vec_dim', type=int, default=300, help="The dimension of each word in the Question Encoder")
 	parser.add_argument('--n_ques_layers', type=int, default=2, help="The number of layers of RNN in Question Model")
 	parser.add_argument('--bidirectional', action="store_true", default=False, help="Flag to indicate if the RNN runs in both directions in Question Model")
-	parser.add_argument('--use_ques_attention', action="store_true", default=False, help="Whether to use attention in Question Model")
-
+	
 	# Options for Image Model
 	parser.add_argument('--n_img_feats', type=int, default=2048, help="The dimension of the Image Features")
 	parser.add_argument('--weights_init', default='xavier', help="The initializer for weight matrices in the network")
-	parser.add_argument('--gcn_depth', default=2, type=int, help="The depth of the GCN network")
-	parser.add_argument('--rel_emb_dim', default=128, type=int, help="The dimensionality of the relation embedding")
+	parser.add_argument('--gcn_depth', default=5, type=int, help="The depth of the GCN network")
+	parser.add_argument('--rel_emb_dim', default=64, type=int, help="The dimensionality of the relation embedding")
 
 	# Options for Answering Model
 	parser.add_argument('--n_qi_gate', type=int, default=128, help="The dimension of the Question-Image Gate in Answerer Model")
 	parser.add_argument('--n_ans_gate', type=int, default=128, help="The dimension of the Answer Gate")
-	parser.add_argument('--n_attn', type=int, default=128, help="The dimension of the output feature dimension for each object for computing attention weights")
+	parser.add_argument('--n_attn', type=int, default=512, help="The dimension of the output feature dimension for each object for computing attention weights")
 
 	return parser.parse_args(namespace = args)

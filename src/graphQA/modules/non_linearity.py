@@ -7,10 +7,11 @@ from torch import nn
 
 class NonLinearity(nn.Module):
 
-	def __init__(self, n_inp, n_out, nl):
+	def __init__(self, n_inp, n_out, nl, drop_prob):
 		super(NonLinearity, self).__init__()
 
 		self.nl = nl
+		self.dropout = nn.Dropout(p=drop_prob)
 		if self.nl == 'gated_tanh':
 			self.tanh = nn.Tanh()
 			self.sigmoid = nn.Sigmoid()
@@ -24,11 +25,11 @@ class NonLinearity(nn.Module):
 
 	def forward(self, inp):
 		if self.nl == 'gated_tanh':
-			y = self.tanh(self.t_layer(inp))
-			g = self.sigmoid(self.g_layer(inp))
+			y = self.tanh(self.dropout(self.t_layer(inp)))
+			g = self.sigmoid(self.dropout(self.g_layer(inp)))
 			return torch.mul(y, g)
 		elif self.nl == 'relu':
-			return self.relu(self.layer(inp))
+			return self.relu(self.dropout(self.layer(inp)))
 		
 
 

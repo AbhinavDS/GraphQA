@@ -17,7 +17,7 @@ class GCN(nn.Module):
 			self.add_layer(nn.Linear(self.n_img_feats, self.n_img_feats))
 		self.a = nn.Tanh()
 	
-	def add_layer(self,layer,init=True):
+	def add_layer(self, layer, init=True):
 		self.layers.append(layer)
 		if init:
 			if self.weights_init == 'xavier':
@@ -34,9 +34,3 @@ class GCN(nn.Module):
 			# Use relational embedding when calculating features from neighbours, instead of just x
 			x = self.a(self.layers[i](x)+torch.bmm(A, self.layers[i+1](x)) + x)
 		return x
-
-# import argparse
-# args = argparse.ArgumentParser()
-# args.n_img_feats = 128
-# args.gcn_depth = 3
-# A = GCN(args).cuda()
