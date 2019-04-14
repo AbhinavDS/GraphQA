@@ -132,7 +132,7 @@ class GQADataset(Dataset):
 		# Get image feature from image
 		h5_idx = self.image_info[image_idx]['index']
 		image_feat = self.image_features_h5[h5_idx]
-		spatial_width = image_feats.size(-1)
+		spatial_width = image_feat.size(-1)
 		spatial_height = image_feat.size(-2)
 		objects[:,0] *= (spatial_width-1)
 		objects[:,2] *= (spatial_width-1)

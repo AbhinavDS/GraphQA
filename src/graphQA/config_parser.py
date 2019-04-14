@@ -73,7 +73,7 @@ def parse_args():
 	parser.add_argument('--bsz', default=32, help="Batch Size")
 	parser.add_argument('--use_cuda', action="store_true", default=False, help="Flag to use CUDA")
 	parser.add_argument('--display_every', type=int, default=10, help="Loss statistics to display after every n batches")
-	parser.add_argument('--drop_prob', default=0.0, help="Dropout probability for all linear layers")
+	parser.add_argument('--drop_prob', default=0.0, type=float, help="Dropout probability for all linear layers")
 	
 	parser.add_argument('--nl', default='relu', help="Type of Non linearity to be used in the network (relu, gated_tanh)")
 
