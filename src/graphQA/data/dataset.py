@@ -129,6 +129,7 @@ class GQADataset(Dataset):
 			if num_objs > self.meta_data['max_num_objs']:
 				break
 
+		num_objs += 1
 		# Get image feature from image
 		h5_idx = self.image_info[image_idx]['index']
 		image_feat = torch.as_tensor(self.image_features_h5[h5_idx], dtype = torch.float)

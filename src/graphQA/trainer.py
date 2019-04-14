@@ -75,8 +75,7 @@ class Trainer:
 				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
 
 				batch_loss = self.criterion(ans_distrib, ans_output)
-				if torch.isnan(batch_loss):
-					w = input('a')
+				
 				batch_loss.backward()
 				self.optimizer.step()
 				loss += batch_loss.data

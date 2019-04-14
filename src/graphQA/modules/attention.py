@@ -42,10 +42,13 @@ class TopDownAttention(nn.Module):
 		gated_attn = self.attn_gate(torch.cat((obj_feats, ques_emb.repeat(1, self.max_num_objs).reshape(batch_sz, self.max_num_objs, -1)), 2))
 
 		attn_layer_out = self.attn_layer(gated_attn).squeeze(2)
+		
 		attn_layer_out = attn_layer_out.data.masked_fill_(obj_mask, -float("inf"))
 		attn_wt = self.attn_softmax(attn_layer_out)
 
-		return torch.bmm(attn_wt.unsqueeze(1), obj_feats).squeeze(1)
+		attn_img_feats = torch.bmm(attn_wt.unsqueeze(1), obj_feats).squeeze(1)
+
+		return attn_img_feats
 
 
 
