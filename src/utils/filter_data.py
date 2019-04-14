@@ -90,7 +90,7 @@ def filter_qa(split, args):
 		write_data(data, val_ids, qa_ids, 'val', args)
 
 		save_scene_graphs(train_ids, 'train', 'train', args)
-		save_scene_graphs(train_ids, 'train', 'val', args)
+		save_scene_graphs(val_ids, 'train', 'val', args)
 
 	else:
 		
