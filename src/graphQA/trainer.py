@@ -60,7 +60,6 @@ class Trainer:
 
 			for i, batch in enumerate(self.train_loader):
 
-				print('Training Batch: {} in epoch: {}'.format(i, epoch))
 				self.optimizer.zero_grad()
 
 				# Unpack the items from the batch tensor
