@@ -147,6 +147,7 @@ class GQADataset(Dataset):
 			if num_objs > self.meta_data['max_num_objs']:
 				break
 
+		#Increase number of object to correct value (since indexed from 0)
 		num_objs += 1
 		# Get image feature from image
 		h5_idx = self.image_info[image_idx]['index']

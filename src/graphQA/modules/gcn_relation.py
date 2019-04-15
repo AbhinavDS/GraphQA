@@ -7,6 +7,7 @@ class GCN(nn.Module):
 	def __init__(self, args):
 		super(GCN, self).__init__()
 		self.n_img_feats = args.n_img_feats
+		self.max_rels = args.max_rels
 		self.relation_embedding_size = args.relation_embedding_size
 		self.gcn_depth = args.gcn_depth
 		self.weights_init = args.weights_init
@@ -15,6 +16,7 @@ class GCN(nn.Module):
 			self.add_layer(nn.Linear(self.n_img_feats,self.n_img_feats))
 			self.add_layer(nn.Linear(self.n_img_feats + self.relation_embedding_size, self.n_img_feats))
 		self.a = nn.Tanh()
+		self.relation_embedding = nn.Embedding(args.max_rels, args.relation_embedding_size)
 	
 	def add_layer(self,layer,init=True):
 		self.layers.append(layer)
@@ -24,27 +26,21 @@ class GCN(nn.Module):
 			else:
 				nn.init.constant_(self.layers[-1].weight,0)
 
-	def forward(self, x, A, R):
+	def forward(self, x, A):
 		#x: batch_size x O x n_img_feats (O = number of objects, torch tensor)
 		#A: batch_size x O x OR (Adjacency Matrix) numpy array
-		#R: R x embedding_size (rel_embeddings: torch tensor)
 
 		# Implemented as ResNet
 		# Graph convolution: feature at object p = weighted feature at object p + sum of weighted features from the neighbours
 		# Use relational embedding when calculating features from neighbours, instead of just x
+
 		batch_size, objects, _ = x.size()
-		num_rel = R.size(0)
-		temp_A = Variable(torch.Tensor(A).type(torch.cuda.FloatTensor),requires_grad=False)
-		R_repeated = R.unsqueeze(0).unsqueeze(0).repeat(batch_size, objects, 1, 1)
+		rel_input = torch.LongTensor(list(rel for rel in range(self.max_rels)))
+		rel_input = rel_input.unsqueeze(0).unsqueeze(1).repeat(bs, o, 1).view(bs, -1)
+		rel_embed = self.relation_embedding(rel_input)
 		for i in range(0,len(self.layers),2):
-			xr = torch.cat((x.unsqueeze(2).repeat(1, 1, num_rel, 1), R_repeated), 3)
-			xr = xr.reshape((batch_size, num_rel* objects, -1))
-			x = self.a(self.layers[i](x)+torch.bmm(temp_A,self.layers[i+1](xr)) + x)
+			xr = x.unsqueeze(2).repeat(1, 1, self.max_rels, 1).view(batch_size, self.max_rels * objects, -1)
+			xr = torch.cat((xr, rel_embed), 3)
+			x = self.a(self.layers[i](x)+torch.bmm(A,self.layers[i+1](xr)) + x)
 		return x
 
-# import argparse
-# args = argparse.ArgumentParser()
-# args.n_img_feats = 512
-# args.relation_embedding_size = 128
-# args.gcn_depth = 3
-# A = GCN(args).cuda()
