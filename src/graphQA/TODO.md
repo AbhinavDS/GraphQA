@@ -7,7 +7,7 @@
 8. Evaluator Module
 
 ##ADS
-9. Check if we need to -1 for spatial in ROI (IMM)
+9. (DONE) Check if we need to -1 for spatial in ROI (IMM):::: ISSUE!!!! See verification.txt
 10. Scene graph generation using NM
 
 ##AG
