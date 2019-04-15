@@ -19,6 +19,8 @@ class Config(object):
 		else:
 			self.device = "cpu"
 
+		print('Executing on Device: {}'.format(self.device))
+
 		self.dataset = 'balanced'
 		self.qa_data_path = {}
 		self.sg_data_path = {}
@@ -31,6 +33,7 @@ class Config(object):
 		self.rel_vocab_path = os.path.join(self.expt_data_dir, 'sg_vocab.json')
 		self.word_vocab_path = os.path.join(self.expt_data_dir, 'qa_vocab.json')
 		self.meta_data_path = os.path.join(self.expt_data_dir, 'meta_data.json')
+		self.word2vec_path = os.path.join(self.expt_data_dir, 'glove.json')
 
 		self.log_dir = os.path.join(self.expt_res_dir, 'logs')
 		self.ckpt_dir = os.path.join(self.expt_res_dir, 'ckpt')
@@ -82,6 +85,7 @@ def parse_args():
 	parser.add_argument('--ques_word_vec_dim', type=int, default=300, help="The dimension of each word in the Question Encoder")
 	parser.add_argument('--n_ques_layers', type=int, default=2, help="The number of layers of RNN in Question Model")
 	parser.add_argument('--bidirectional', action="store_true", default=False, help="Flag to indicate if the RNN runs in both directions in Question Model")
+	parser.add_argument('--use_glove', action="store_true",  default=False, help="Directive to use pre-trained Glove embeddings")
 	
 	# Options for Image Model
 	parser.add_argument('--n_img_feats', type=int, default=2048, help="The dimension of the Image Features")

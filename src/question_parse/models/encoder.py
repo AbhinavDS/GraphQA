@@ -9,6 +9,7 @@ class Encoder(BaseRNN):
         super(Encoder, self).__init__(vocab_size, max_len, hidden_size, input_dropout_p, dropout_p, n_layers, rnn_cell)
         self.variable_lengths = variable_lengths
         if word2vec is not None:
+            print('Using Pre-trained Word2vec')
             assert word2vec.size(0) == vocab_size
             self.word_vec_dim = word2vec.size(1)
             self.embedding = nn.Embedding(vocab_size, self.word_vec_dim)

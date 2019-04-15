@@ -18,11 +18,18 @@ class Trainer:
 
 		self.args = args
 		self.num_epochs = args.num_epochs
-		self.model = BottomUpGCN(args)
-		self.device = self.args.device
-
 		self.train_dataset = train_dataset
 		self.val_dataset = val_dataset
+		self.use_glove = args.use_glove
+
+		if self.use_glove:
+			self.embeddings_mat = self.train_dataset.embeddings_mat
+			self.model = BottomUpGCN(args, self.embeddings_mat)
+		else:
+			self.model = BottomUpGCN(args)
+
+		self.device = self.args.device
+
 		# Can be changed to support different optimizers
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args.lr)
 		self.set_criterion()
@@ -205,7 +212,7 @@ class Trainer:
 		model_name = self.model.__class__.__name__
 		ckpt_path = os.path.join(self.args.ckpt_dir, '{}.ckpt'.format(model_name))
 
-		ckpt = torch.load(ckpt_path)
+		ckpt = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
 		self.model.load_state_dict(ckpt['state_dict'])
 
 	def save_ckpt(self):

@@ -38,6 +38,12 @@ class GQADataset(Dataset):
 		self.relations_vocab = utils.load_vocab(relations_vocab_json)
 
 		self.meta_data = utils.load_vocab(meta_data_json)
+
+		if args.use_glove:
+			self.word2vec_path = args.word2vec_path
+			self.ques_word_vec_dim = args.ques_word_vec_dim
+			self.load_embeddings()
+
 		print("Data Read successful", len(self.questions_keys))
 
 	def get_data_config(self):
@@ -59,6 +65,18 @@ class GQADataset(Dataset):
 		config['ques_vocab_sz'] = len(self.vocab['question_token_to_idx'])
 
 		return config
+
+	def load_embeddings(self):
+
+		self.embeddings_mat = np.random.normal(scale=0.6, size=(len(self.vocab['question_token_to_idx']), self.ques_word_vec_dim))
+
+		with open(self.word2vec_path, 'r') as f:
+			embedding_dict = json.load(f)
+
+			for word in embedding_dict:
+				self.embeddings_mat[self.vocab['question_token_to_idx'][word]] = np.array(embedding_dict[word])
+
+		self.embeddings_mat = torch.as_tensor(self.embeddings_mat, dtype=torch.float)
 
 	def __len__(self):
 		return len(self.questions)

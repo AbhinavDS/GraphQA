@@ -15,13 +15,13 @@ import utils.utils as utils
 
 class BottomUpGCN(nn.Module):
 
-	def __init__(self, args):
+	def __init__(self, args, word2vec=None):
 
 		super(BottomUpGCN, self).__init__()
 		
 
 		self.gcn = GCN(args)
-		self.ques_encoder = QuesEncoder(args.ques_vocab_sz, args.max_ques_len, args.ques_word_vec_dim, args.n_ques_emb, args.n_ques_layers, input_dropout_p=args.drop_prob, dropout_p=args.drop_prob, bidirectional=args.bidirectional, variable_lengths=args.variable_lengths)
+		self.ques_encoder = QuesEncoder(args.ques_vocab_sz, args.max_ques_len, args.ques_word_vec_dim, args.n_ques_emb, args.n_ques_layers, input_dropout_p=args.drop_prob, dropout_p=args.drop_prob, bidirectional=args.bidirectional, variable_lengths=args.variable_lengths, word2vec=word2vec)
 		self.dropout_layer = nn.Dropout(p=args.drop_prob)
 		self.attn_layer = TopDownAttention(args)
 		self.nl = args.nl

@@ -14,7 +14,8 @@ parser.add_argument('--expand_vocab', default=0, type=int)
 parser.add_argument('--unk_threshold', default=0, type=int)
 parser.add_argument('--output_vocab_path', default='')
 parser.add_argument('--meta_data_path', default='')
-
+parser.add_argument('--inp_word2vec_path', default="")
+parser.add_argument('--out_word2vec_path', default="")
 
 def main(args):
 	if (args.output_vocab_path == ''):
@@ -77,6 +78,27 @@ def main(args):
 	utils.mkdirs(os.path.dirname(args.meta_data_path))
 	with open(args.meta_data_path, 'w') as f:
 		json.dump(meta_vocab, f)
+
+
+	if args.inp_word2vec_path != "":
+
+		# Load the input word2vec vectors and store the ones that are actually present in the vocabulary.
+
+		embeddings = {}
+		with open(args.inp_word2vec_path, 'r') as f:
+
+			for line in f.readlines():
+				line = line.replace('\r', '').replace('\n', '').split()
+				word = line[0].lower()
+				vector = line[1:]
+				if word in vocab['question_token_to_idx']:
+					embeddings[word] = vector
+
+		missed = len( set(vocab['question_token_to_idx']) - set(embeddings.keys()))
+		print('Missed {}/{} words in Pre-Trained embeddings'.format(missed, len(vocab['question_token_to_idx'])))
+		
+		with open(args.out_word2vec_path, 'w') as f:
+			json.dump(embeddings, f)
 
 if __name__ == '__main__':
 	args = parser.parse_args()
