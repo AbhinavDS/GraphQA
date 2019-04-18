@@ -80,7 +80,7 @@ def create_obj_data(sg_data, args):
 	with open(os.path.join(args.out_dir, 'obj_data.json'), 'w') as f:
 		json.dump(obj_data, f)
 
-	with open(os.path.join(args.out_dir, 'obj_list.json'), 'w') as f:
+	with open(os.path.join(args.out_dir, 'obj_list.txt'), 'w') as f:
 		for obj in obj_list:
 			f.write("{}\n".format(obj))
 
@@ -130,7 +130,7 @@ def create_rel_data(sg_data, obj_map, args):
 	with open(os.path.join(args.out_dir, 'rel_data.json'), 'w') as f:
 		json.dump(rel_data, f, indent = 4)
 
-	with open(os.path.join(args.out_dir, 'pred_list.json'), 'w') as f:
+	with open(os.path.join(args.out_dir, 'pred_list.txt'), 'w') as f:
 		for pred in pred_list:
 			f.write("{}\n".format(pred))
 

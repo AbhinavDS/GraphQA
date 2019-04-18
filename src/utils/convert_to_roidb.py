@@ -510,9 +510,9 @@ def main(args):
     img_long_sizes = [512, 1024]
     valid_im_idx = imdb['valid_idx'][:] # valid image indices
     img_ids = imdb['image_ids'][:]
-    obj_data = filter_by_idx(obj_data, valid_im_idx)
-    rel_data = filter_by_idx(rel_data, valid_im_idx)
-    img_data = filter_by_idx(img_data, valid_im_idx)
+    #bj_data = filter_by_idx(obj_data, valid_im_idx)
+    #rel_data = filter_by_idx(rel_data, valid_im_idx)
+    #img_data = filter_by_idx(img_data, valid_im_idx)
 
     # sanity check
     for i in range(num_im):
