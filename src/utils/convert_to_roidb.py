@@ -352,11 +352,12 @@ def sentence_preprocess(phrase):
       'è': 'e',
       '…': '',
     }
-    phrase = phrase.encode('utf-8')
+    phrase = phrase#.encode('utf-8')
     phrase = phrase.lstrip(' ').rstrip(' ')
-    for k, v in replacements.iteritems():
+    translator = str.maketrans('', '', string.punctuation)
+    for k, v in replacements.items():
         phrase = phrase.replace(k, v)
-    return str(phrase).lower().translate(None, string.punctuation).decode('utf-8', 'ignore')
+    return str(phrase).lower().translate(translator)#.decode('utf-8', 'ignore')
 
 
 def encode_splits(obj_data, opt=None):
@@ -396,7 +397,7 @@ def make_alias_dict(dict_file):
 
 def make_list(list_file):
     """create a blacklist list from a file"""
-    return [line.strip('\n').strip('\r') for line in open(list_file)]
+    return [line.strip('\n').strip('\r') for line in open(list_file, 'r')]
 
 
 def filter_object_boxes(data, heights, widths, area_frac_thresh):
@@ -472,15 +473,15 @@ def main(args):
     print('start')
     pprint.pprint(args)
 
-    # obj_alias_dict = {}
-    # if len(args.object_alias) > 0:
-    #     print('using object alias from %s' % (args.object_alias))
-    #     obj_alias_dict, obj_vocab_list = make_alias_dict(args.object_alias)
+    obj_alias_dict = {}
+    if len(args.object_alias) > 0:
+        print('using object alias from %s' % (args.object_alias))
+        obj_alias_dict, obj_vocab_list = make_alias_dict(args.object_alias)
 
-    # pred_alias_dict = {}
-    # if len(args.pred_alias) > 0:
-    #     print('using predicate alias from %s' % (args.pred_alias))
-    #     pred_alias_dict, pred_vocab_list = make_alias_dict(args.pred_alias)
+    pred_alias_dict = {}
+    if len(args.pred_alias) > 0:
+        print('using predicate alias from %s' % (args.pred_alias))
+        pred_alias_dict, pred_vocab_list = make_alias_dict(args.pred_alias)
 
     obj_list = []
     if len(args.object_list) > 0:
@@ -496,9 +497,9 @@ def main(args):
 
     # read in the annotation data
     print('loading json files..')
-    obj_data = json.load(open(args.object_input))
-    rel_data = json.load(open(args.relationship_input))
-    img_data = json.load(open(args.metadata_input))
+    obj_data = json.load(open(args.object_input, 'r'))
+    rel_data = json.load(open(args.relationship_input, 'r'))
+    img_data = json.load(open(args.metadata_input, 'r'))
     
     assert(len(rel_data) == len(obj_data) and
            len(obj_data) == len(img_data))
@@ -535,8 +536,8 @@ def main(args):
     obj_rel_cross_check(obj_data, rel_data)
 
     # preprocess label data
-    #preprocess_object_labels(obj_data, alias_dict=obj_alias_dict)
-    #preprocess_predicates(rel_data, alias_dict=pred_alias_dict)
+    preprocess_object_labels(obj_data, alias_dict=obj_alias_dict)
+    preprocess_predicates(rel_data, alias_dict=pred_alias_dict)
 
     heights, widths = imdb['original_heights'][:], imdb['original_widths'][:]
     if args.min_box_area_frac > 0:
@@ -619,15 +620,17 @@ if __name__ == '__main__':
     parser.add_argument('--object_input', default="/scratch/cluster/ankgarg/gqa/vg_test_1p/obj_data.json", type=str)
     parser.add_argument('--relationship_input', default="/scratch/cluster/ankgarg/gqa/vg_test_1p/rel_data.json", type=str)
     parser.add_argument('--metadata_input', default="/scratch/cluster/ankgarg/gqa/vg_test_1p/img_metadata.json", type=str)
-    parser.add_argument('--object_list', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/obj_list.json', type=str)
-    parser.add_argument('--pred_list', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/pred_list.json', type=str)
+    parser.add_argument('--object_list', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/obj_list.txt', type=str)
+    parser.add_argument('--pred_list', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/pred_list.txt', type=str)
+    parser.add_argument('--object_alias', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/object_alias.txt', type=str)
+    parser.add_argument('--pred_alias', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/predicate_alias.txt', type=str)
     parser.add_argument('--num_objects', default=0, type=int, help="set to 0 to disable filtering")
     parser.add_argument('--num_predicates', default=0, type=int, help="set to 0 to disable filtering")
     parser.add_argument('--min_box_area_frac', default=0.002, type=float)
     parser.add_argument('--json_file', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/VG-dicts.json')
     parser.add_argument('--h5_file', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/VG.h5')
     parser.add_argument('--load_frac', default=1, type=float)
-    parser.add_argument('--use_input_split', default=False, type=bool)
+    parser.add_argument('--use_input_split', default=True, type=bool)
     parser.add_argument('--train_frac', default=0.7, type=float)
     parser.add_argument('--val_frac', default=0.7, type=float)
     parser.add_argument('--shuffle', default=False, type=bool)

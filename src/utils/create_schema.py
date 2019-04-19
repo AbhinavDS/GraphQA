@@ -12,6 +12,8 @@ import os
 import argparse
 import json
 
+splits = ['train', 'val', 'test']
+
 def parse_args():
 
 	"""
@@ -31,12 +33,14 @@ def read_sg_data(args):
 	Read the SG data file
 	"""
 
-	with open(args.sg_data_path, 'r') as f:
-		sg_data = json.load(f)
+	sg_data = {}
+	for spl in splits:
+		with open(args.sg_data_path.replace('train', spl), 'r') as f:
+			sg_data[spl] = json.load(f)
 
 	return sg_data
 
-def create_obj_data(sg_data, args):
+def create_obj_data(sg_data_spl, args):
 
 	"""
 	Create a list of JSON objects where each object is for a image.
@@ -48,39 +52,45 @@ def create_obj_data(sg_data, args):
 	obj_map = {}
 	obj_list = set()
 
-	for img_id in sg_data:
+	for spl in sg_data_spl:
 
-		img_dict = {
-			'image_id': int(img_id),
-			'objects': []
-		}
+		sg_data = sg_data_spl[spl]
+	
+		for img_id in sg_data:
 
-		obj_map[int(img_id)] = {}
-
-		for obj_id in sg_data[img_id]['objects']:
-			
-			obj = sg_data[img_id]['objects'][obj_id]
-
-			obj_dict = {
-				'object_id': int(obj_id),
-				'x': obj['x'],
-				'y': obj['y'],
-				'w': obj['w'],
-				'h': obj['h'],
-				'names': [obj['name']]
+			img_dict = {
+				'image_id': int(img_id),
+				'split': spl,
+				'objects': []
 			}
 
-			obj_list.add(obj['name'])
+			obj_map[int(img_id)] = {}
 
-			img_dict['objects'].append(obj_dict)
-			obj_map[int(img_id)][int(obj_id)] = obj_dict
+			for obj_id in sg_data[img_id]['objects']:
+				
+				obj = sg_data[img_id]['objects'][obj_id]
 
-		obj_data.append(img_dict)
+				obj_dict = {
+					'object_id': int(obj_id),
+					'x': obj['x'],
+					'y': obj['y'],
+					'w': obj['w'],
+					'h': obj['h'],
+					'names': [obj['name']]
+				}
+
+				if spl == "train":
+					obj_list.add(obj['name'])
+
+				img_dict['objects'].append(obj_dict)
+				obj_map[int(img_id)][int(obj_id)] = obj_dict
+
+			obj_data.append(img_dict)
 
 	with open(os.path.join(args.out_dir, 'obj_data.json'), 'w') as f:
 		json.dump(obj_data, f)
 
-	with open(os.path.join(args.out_dir, 'obj_list.json'), 'w') as f:
+	with open(os.path.join(args.out_dir, 'obj_list.txt'), 'w') as f:
 		for obj in obj_list:
 			f.write("{}\n".format(obj))
 
@@ -88,7 +98,7 @@ def create_obj_data(sg_data, args):
 
 	return obj_map
 
-def create_rel_data(sg_data, obj_map, args):
+def create_rel_data(sg_data_spl, obj_map, args):
 
 	"""
 	Create List of Relation data for each image in the dataset based on the schema of Visual Genome given at its weblink
@@ -100,43 +110,50 @@ def create_rel_data(sg_data, obj_map, args):
 	rel_idx = 1
 	pred_list = set()
 
-	for img_id in sg_data:
+	for spl in sg_data_spl:
 
-		img_dict = {
-			'image_id': int(img_id), 
-			'relationships': []
-		}
+		sg_data = sg_data_spl[spl]
+	
+		for img_id in sg_data:
 
-		for obj_id in sg_data[img_id]['objects']:
+			img_dict = {
+				'image_id': int(img_id),
+				'split': spl, 
+				'relationships': []
+			}
 
-			obj = sg_data[img_id]['objects'][obj_id]
+			for obj_id in sg_data[img_id]['objects']:
 
-			for rel in obj['relations']:
+				obj = sg_data[img_id]['objects'][obj_id]
 
-				rel_dict = {
-					'relationship_id': rel_idx,
-					'predicate': rel['name'],
-					'subject': obj_map[int(img_id)][int(obj_id)],
-					'object': obj_map[int(img_id)][int(rel['object'])]
-				}
+				for rel in obj['relations']:
 
-				rel_idx += 1
+					rel_dict = {
+						'relationship_id': rel_idx,
+						'predicate': rel['name'],
+						'subject': obj_map[int(img_id)][int(obj_id)],
+						'object': obj_map[int(img_id)][int(rel['object'])]
+					}
 
-				img_dict['relationships'].append(rel_dict)
-				pred_list.add(rel['name'])
+					rel_idx += 1
 
-		rel_data.append(img_dict)
+					img_dict['relationships'].append(rel_dict)
+
+					if spl == "train":
+						pred_list.add(rel['name'])
+
+			rel_data.append(img_dict)
 
 	with open(os.path.join(args.out_dir, 'rel_data.json'), 'w') as f:
 		json.dump(rel_data, f, indent = 4)
 
-	with open(os.path.join(args.out_dir, 'pred_list.json'), 'w') as f:
+	with open(os.path.join(args.out_dir, 'pred_list.txt'), 'w') as f:
 		for pred in pred_list:
 			f.write("{}\n".format(pred))
 
 	print(len(pred_list))
 
-def create_img_data(sg_data, args):
+def create_img_data(sg_data_spl, args):
 
 	"""
 	Create an Image Data Json file which is a list of JSON objects. Each object has the following keys:
@@ -152,15 +169,20 @@ def create_img_data(sg_data, args):
 
 	img_data = []
 
-	for img_id in sg_data:
+	for spl in sg_data_spl:
 
-		img_obj = {
-			'image_id': int(img_id),
-			'width': sg_data[img_id]['width'],
-			'height': sg_data[img_id]['height'],
-		}
+		sg_data = sg_data_spl[spl]
 
-		img_data.append(img_obj)
+		for img_id in sg_data:
+
+			img_obj = {
+				'image_id': int(img_id),
+				'width': sg_data[img_id]['width'],
+				'height': sg_data[img_id]['height'],
+				'split': spl
+			}
+
+			img_data.append(img_obj)
 
 	with open(os.path.join(args.out_dir, 'img_metadata.json'), 'w') as f:
 		json.dump(img_data, f)

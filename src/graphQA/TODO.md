@@ -12,8 +12,6 @@
 
 ##AG
 11. Add averaged image_feature in attention calculation (IMM)
-13. Word2Vec (IMM)
-
 
 
 ## PERMISSION DENIED SOLVE IT (IMMM)
