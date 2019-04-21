@@ -17,12 +17,19 @@ class TopDownAttention(nn.Module):
 
 		# Doubt on what to set
 		self.attn_layer = nn.Linear(args.n_attn, 1)
-		self.attn_gate = NonLinearity(args.n_img_feats + args.n_ques_emb, args.n_attn, args.nl, args.drop_prob)
 		self.attn_softmax = nn.Softmax(dim=1)
 		self.device = args.device
 		self.max_num_objs = args.max_num_objs
+		self.use_img_feats = args.use_img_feats
 
-	def forward(self, obj_feats, ques_emb, num_obj):
+		if self.use_img_feats:
+			self.img_size = 7
+			self.avg_pool = nn.AvgPool2d(self.img_size)
+			self.attn_gate = NonLinearity(2 * args.n_img_feats + args.n_ques_emb, args.n_attn, args.nl, args.drop_prob)
+		else:
+			self.attn_gate = NonLinearity(args.n_img_feats + args.n_ques_emb, args.n_attn, args.nl, args.drop_prob)
+
+	def forward(self, obj_feats, ques_emb, num_obj, img_feats=None):
 
 		"""
 		@param obj_feats: Tensor of Image/Object Features to be attended on. Size: (B*O*F1)
@@ -38,8 +45,16 @@ class TopDownAttention(nn.Module):
 		for i in range(self.max_num_objs):
 			obj_mask[:, i] = (i >= num_obj)
 		
-		# Computing attention
-		gated_attn = self.attn_gate(torch.cat((obj_feats, ques_emb.repeat(1, self.max_num_objs).reshape(batch_sz, self.max_num_objs, -1)), 2))
+		if self.use_img_feats:
+			
+			avg_img_feats = self.avg_pool(img_feats).view(batch_sz, -1).repeat(1, self.max_num_objs).reshape(batch_sz, self.max_num_objs, -1)
+
+			# Computing attention
+			gated_attn = self.attn_gate(torch.cat((obj_feats, avg_img_feats, ques_emb.repeat(1, self.max_num_objs).reshape(batch_sz, self.max_num_objs, -1)), 2))			
+
+		else:
+			# Computing attention
+			gated_attn = self.attn_gate(torch.cat((obj_feats, ques_emb.repeat(1, self.max_num_objs).reshape(batch_sz, self.max_num_objs, -1)), 2))
 
 		attn_layer_out = self.attn_layer(gated_attn).squeeze(2)
 		
