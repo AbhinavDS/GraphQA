@@ -32,6 +32,7 @@ class BottomUpGCN(nn.Module):
 		if args.bidirectional:
 			self.ques_proj = nn.Linear(2*args.n_ques_emb, args.n_ques_emb)
 
+		self.use_img_feats = args.use_img_feats
 		self.max_ques_len = args.max_ques_len
 		self.max_rels = args.max_rels
 		self.max_num_objs = args.max_num_objs
@@ -67,8 +68,11 @@ class BottomUpGCN(nn.Module):
 		else:
 			ques_emb = ques_hidden[-1, :, :]
 
-		# Obtain the attented image feature
-		attn_img_feats = self.attn_layer(gcn_obj_feats, ques_emb, num_obj)
+		if self.use_img_feats:
+			# Obtain the attented image feature
+			attn_img_feats = self.attn_layer(gcn_obj_feats, ques_emb, num_obj, img_feats)
+		else:
+			attn_img_feats = self.attn_layer(gcn_obj_feats, ques_emb, num_obj)
 
 		# Use the attented image feature to obtain a probability distribution over the possible set of answers
 

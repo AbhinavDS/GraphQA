@@ -98,4 +98,7 @@ def parse_args():
 	parser.add_argument('--n_ans_gate', type=int, default=128, help="The dimension of the Answer Gate")
 	parser.add_argument('--n_attn', type=int, default=512, help="The dimension of the output feature dimension for each object for computing attention weights")
 
+	# Options for Attention Model
+	parser.add_argument('--use_img_feats', action="store_true", default=False, help="Use Average Image Features in Attention Model")
+
 	return parser.parse_args(namespace = args)
