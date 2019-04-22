@@ -106,46 +106,47 @@ class GQADataset(Dataset):
 		sg = self.scene_graphs[image_idx]
 		width, height = (float)(sg['width']), (float)(sg['height'])
 		
-		# # Get object dims for roi pooling and Create adjacency matrix with relations (FOR GCN_RELS)
-		# num_relations = len(self.relations_vocab['relation_token_to_idx'])
-		# A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs'] * num_relations))
-		# objects = np.zeros((self.meta_data['max_num_objs'], 4))
-		# object_keys = list(sg['objects'].keys())
-		# for num_objs, obj_key in enumerate(object_keys):
-		# 	obj = sg['objects'][obj_key]
-		# 	objects[num_objs][0] = obj['x'] / width
-		# 	objects[num_objs][1] = obj['y'] / height
-		# 	objects[num_objs][2] = (obj['x'] + obj['w']) / width
-		# 	objects[num_objs][3] = (obj['y'] + obj['h']) / height
-		# 	for relation in obj["relations"]:
-		# 		rel_encoded = preprocess_utils.encode([relation['name']],
-		# 										 self.relations_vocab['relation_token_to_idx'],
-		# 										 allow_unk=True)
-		# 		assert len(rel_encoded) == 1
-		# 		obj_id = object_keys.index(relation['object'])
-		# 		A_id = rel_encoded[0] * self.meta_data['max_num_objs'] + obj_id
-		# 		A[num_objs][A_id] = 1# can give relation id in OxO matrix if needed
-		# 	if num_objs > self.meta_data['max_num_objs']:
-		# 		break
+		if self.args.use_rel_emb:
+			# Get object dims for roi pooling and Create adjacency matrix with relations (FOR GCN_RELS)
+			num_relations = len(self.relations_vocab['relation_token_to_idx'])
+			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs'] * num_relations))
+			objects = np.zeros((self.meta_data['max_num_objs'], 4))
+			object_keys = list(sg['objects'].keys())
+			for num_objs, obj_key in enumerate(object_keys):
+				obj = sg['objects'][obj_key]
+				objects[num_objs][0] = obj['x'] / width
+				objects[num_objs][1] = obj['y'] / height
+				objects[num_objs][2] = (obj['x'] + obj['w']) / width
+				objects[num_objs][3] = (obj['y'] + obj['h']) / height
+				for relation in obj["relations"]:
+					rel_encoded = preprocess_utils.encode([relation['name']],
+													 self.relations_vocab['relation_token_to_idx'],
+													 allow_unk=True)
+					assert len(rel_encoded) == 1
+					obj_id = object_keys.index(relation['object'])
+					A_id = rel_encoded[0] * self.meta_data['max_num_objs'] + obj_id
+					A[num_objs][A_id] = 1# can give relation id in OxO matrix if needed
+				if num_objs > self.meta_data['max_num_objs']:
+					break
+		else:
+			# Get object dims for roi pooling and Create adjacency matrix with relations (FOR_SIMPLE_GCN)
+			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs']))
+			objects = np.zeros((self.meta_data['max_num_objs'], 4), dtype=np.float32)
+			
+			object_keys = list(sg['objects'].keys())
+			for num_objs, obj_key in enumerate(object_keys):
+				obj = sg['objects'][obj_key]
+				objects[num_objs][0] = max(obj['x'] / width, 0.0)
+				objects[num_objs][1] = max(obj['y'] / height, 0.0)
+				objects[num_objs][2] = min((obj['x'] + obj['w']) / width, 1.0)
+				objects[num_objs][3] = min((obj['y'] + obj['h']) / height, 1.0)
+				for relation in obj["relations"]:
+					obj_id = object_keys.index(relation['object'])
+					# can give relation id in OxO matrix if needed
+					A[num_objs][obj_id] = 1
 
-		# Get object dims for roi pooling and Create adjacency matrix with relations (FOR_SIMPLE_GCN)
-		A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs']))
-		objects = np.zeros((self.meta_data['max_num_objs'], 4), dtype=np.float32)
-		
-		object_keys = list(sg['objects'].keys())
-		for num_objs, obj_key in enumerate(object_keys):
-			obj = sg['objects'][obj_key]
-			objects[num_objs][0] = max(obj['x'] / width, 0.0)
-			objects[num_objs][1] = max(obj['y'] / height, 0.0)
-			objects[num_objs][2] = min((obj['x'] + obj['w']) / width, 1.0)
-			objects[num_objs][3] = min((obj['y'] + obj['h']) / height, 1.0)
-			for relation in obj["relations"]:
-				obj_id = object_keys.index(relation['object'])
-				# can give relation id in OxO matrix if needed
-				A[num_objs][obj_id] = 1
-
-			if num_objs > self.meta_data['max_num_objs']:
-				break
+				if num_objs > self.meta_data['max_num_objs']:
+					break
 
 		#Increase number of object to correct value (since indexed from 0)
 		num_objs += 1
