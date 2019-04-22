@@ -7,7 +7,6 @@ class GCN(nn.Module):
 	def __init__(self, args):
 		
 		super(GCN, self).__init__()
-		
 		self.n_img_feats = args.n_img_feats
 		self.gcn_depth = args.gcn_depth
 		self.weights_init = args.weights_init

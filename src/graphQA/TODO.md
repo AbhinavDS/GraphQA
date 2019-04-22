@@ -4,13 +4,12 @@
 6. Functional Program learning
 7. Check if network params need to be stored
 
-##ADS
-10. Scene graph generation using NM
-
-##AG
-11. Add averaged image_feature in attention calculation (IMM)
-
-12. Val set handling filter data
-13. Evaluation metrics
+13. Evaluation metrics (AG)
+14. Gofai (W)
+15. check rel embed with glove, rel embed normal, model run with generated scene graph (AD)
+16. Check if no question id is being entailed from outside a data split (AG)
+17. Run Mac Network (AG)
+18. Run on 5p data
+19. Add sample config to git
 
 ## PERMISSION DENIED SOLVE IT (IMMM)

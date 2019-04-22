@@ -103,6 +103,7 @@ def parse_args():
 	parser.add_argument('--weights_init', default='xavier', help="The initializer for weight matrices in the network")
 	parser.add_argument('--gcn_depth', default=5, type=int, help="The depth of the GCN network")
 	parser.add_argument('--rel_emb_dim', default=64, type=int, help="The dimensionality of the relation embedding")
+	parser.add_argument('--use_rel_emb', action="store_true", default=False, help="Use Relation Embedding")
 
 	# Options for Answering Model
 	parser.add_argument('--n_qi_gate', type=int, default=128, help="The dimension of the Question-Image Gate in Answerer Model")
