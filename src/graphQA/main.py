@@ -17,6 +17,7 @@ if __name__ == "__main__":
 		val_dataset = GQADataset(args, qa_data_key='val', sg_data_key='val')
 
 		args.set_config(train_dataset.get_data_config())
+		print(args)
 
 		trainer = Trainer(args, train_dataset, val_dataset)
 		trainer.train()

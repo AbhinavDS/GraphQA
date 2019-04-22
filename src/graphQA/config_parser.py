@@ -33,7 +33,7 @@ class Config(object):
 		self.rel_vocab_path = os.path.join(self.expt_data_dir, 'sg_vocab.json')
 		self.word_vocab_path = os.path.join(self.expt_data_dir, 'qa_vocab.json')
 		self.meta_data_path = os.path.join(self.expt_data_dir, 'meta_data.json')
-		self.word2vec_path = os.path.join(self.expt_data_dir, 'glove.json')
+		self.word2vec_path = os.path.join(self.expt_data_dir, 'glove.{}d.json'.format(self.ques_word_vec_dim))
 
 		self.expt_res_dir = os.path.join(self.expt_res_base_dir, self.expt_name)
 		self.log_dir = os.path.join(self.expt_res_dir, 'logs')
@@ -46,10 +46,16 @@ class Config(object):
 			setattr(self, key, config[key])
 
 	def __str__(self):
-		return str(self.__dict__)
+		res = ""
+		for k in self.__dict__:
+			res += "{}: {}\n".format(k, self.__dict__[k])
+		return res
 
 	def __repr__(self):
-		return str(self.__dict__)
+		res = ""
+		for k in self.__dict__:
+			res += "{}: {}\n".format(k, self.__dict__[k])
+		return res
 
 	def create_dir(self, dir_path):
 
