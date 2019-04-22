@@ -10,8 +10,6 @@
 ##AG
 11. Add averaged image_feature in attention calculation (IMM)
 
-
-
 12. Val set handling filter data
 13. Evaluation metrics
 

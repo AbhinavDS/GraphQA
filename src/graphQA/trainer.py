@@ -80,10 +80,9 @@ class Trainer:
 				num_obj = batch['num_objs'].to(self.device)[sorted_indices] 
 				ans_output = batch['ans'].to(self.device)[sorted_indices]
 				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
-
-				print(ans_distrib.size(), ans_output.size())
-				batch_loss = self.criterion(ans_distrib, ans_output)
 				
+				#print(ans_distrib.size(), ans_output.size())
+				batch_loss = self.criterion(ans_distrib, ans_output)
 				batch_loss.backward()
 				self.optimizer.step()
 				loss += batch_loss.data
@@ -127,6 +126,7 @@ class Trainer:
 			ans_output = batch['ans'].to(self.device)[sorted_indices]
 
 			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
+
 			batch_loss = self.criterion(ans_distrib, ans_output)
 			loss += batch_loss.data
 
@@ -185,7 +185,7 @@ class Trainer:
 	def set_criterion(self):
 
 		if self.args.criterion == "bce":
-			self.criterion = nn.BCELoss()
+			self.criterion = nn.BCEWithLogitsLoss()
 		elif self.args.criterion == "xce":
 			self.criterion = nn.CrossEntropyLoss()
 		else:

@@ -57,6 +57,9 @@ class Config(object):
 			res += "{}: {}\n".format(k, self.__dict__[k])
 		return res
 
+	def get_dict(self):
+		return self.__dict__
+
 	def create_dir(self, dir_path):
 
 		if not os.path.exists(dir_path):

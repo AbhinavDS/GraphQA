@@ -130,15 +130,15 @@ class GQADataset(Dataset):
 
 		# Get object dims for roi pooling and Create adjacency matrix with relations (FOR_SIMPLE_GCN)
 		A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs']))
-		objects = np.zeros((self.meta_data['max_num_objs'], 4), dtype=np.float32)
+		objects = np.zeros((self.meta_data['max_num_objs'], 4))
 		
 		object_keys = list(sg['objects'].keys())
 		for num_objs, obj_key in enumerate(object_keys):
 			obj = sg['objects'][obj_key]
-			objects[num_objs][0] = max(obj['x'] / width, 0.0)
-			objects[num_objs][1] = max(obj['y'] / height, 0.0)
-			objects[num_objs][2] = min((obj['x'] + obj['w']) / width, 1.0)
-			objects[num_objs][3] = min((obj['y'] + obj['h']) / height, 1.0)
+			objects[num_objs][0] = obj['x'] / width
+			objects[num_objs][1] = obj['y'] / height
+			objects[num_objs][2] = (obj['x'] + obj['w']) / width
+			objects[num_objs][3] = (obj['y'] + obj['h']) / height
 			for relation in obj["relations"]:
 				obj_id = object_keys.index(relation['object'])
 				# can give relation id in OxO matrix if needed
@@ -158,10 +158,18 @@ class GQADataset(Dataset):
 		objects[:,2] *= (spatial_width-1)
 		objects[:,1] *= (spatial_height-1)
 		objects[:,3] *= (spatial_height-1)
+
+		if self.args.criterion == "bce":
+			ans_output = torch.zeros(len(self.vocab['answer_token_to_idx']), dtype=torch.float32)
+			if answer_encoded[0] >= len(self.vocab['answer_token_to_idx']) or answer_encoded[0] < 0:
+				print('Error')
+			ans_output[answer_encoded[0]] = 1
+		else:
+			ans_output = answer_encoded[0]
 		
 		return {
 				'ques': torch.as_tensor(question_encoded, dtype=torch.long),
-				'ans': answer_encoded[0],
+				'ans': ans_output,
 				'ques_lens': ques_len,
 				'obj_bboxes': torch.as_tensor(objects, dtype=torch.float),
 				'num_objs': num_objs,
