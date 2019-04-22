@@ -6,6 +6,7 @@ from torch.autograd import Variable
 class GCN(nn.Module):
 	def __init__(self, args):
 		super(GCN, self).__init__()
+		self.device = args.device
 		self.n_img_feats = args.n_img_feats
 		self.max_rels = args.max_rels
 		self.rel_emb_dim = args.rel_emb_dim
@@ -35,7 +36,7 @@ class GCN(nn.Module):
 		# Use relational embedding when calculating features from neighbours, instead of just x
 
 		batch_size, objects, _ = x.size()
-		rel_input = torch.LongTensor(list(rel for rel in range(self.max_rels))).to(self.args.device)
+		rel_input = torch.LongTensor(list(rel for rel in range(self.max_rels))).to(self.device)
 		rel_input = rel_input.unsqueeze(0).unsqueeze(1).repeat(batch_size, objects, 1).view(batch_size, -1)
 		rel_embed = self.relation_embedding(rel_input)
 		for i in range(0,len(self.layers),2):
