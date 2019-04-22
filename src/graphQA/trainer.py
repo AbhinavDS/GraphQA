@@ -81,6 +81,7 @@ class Trainer:
 				ans_output = batch['ans'].to(self.device)[sorted_indices]
 				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
 
+				print(ans_distrib.size(), ans_output.size())
 				batch_loss = self.criterion(ans_distrib, ans_output)
 				
 				batch_loss.backward()

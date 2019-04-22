@@ -33,8 +33,9 @@ class Config(object):
 		self.rel_vocab_path = os.path.join(self.expt_data_dir, 'sg_vocab.json')
 		self.word_vocab_path = os.path.join(self.expt_data_dir, 'qa_vocab.json')
 		self.meta_data_path = os.path.join(self.expt_data_dir, 'meta_data.json')
-		self.word2vec_path = os.path.join(self.expt_data_dir, 'glove.json')
+		self.word2vec_path = os.path.join(self.expt_data_dir, 'glove.{}d.json'.format(self.ques_word_vec_dim))
 
+		self.expt_res_dir = os.path.join(self.expt_res_base_dir, self.expt_name)
 		self.log_dir = os.path.join(self.expt_res_dir, 'logs')
 		self.ckpt_dir = os.path.join(self.expt_res_dir, 'ckpt')
 		self.create_dir(self.log_dir)
@@ -45,10 +46,16 @@ class Config(object):
 			setattr(self, key, config[key])
 
 	def __str__(self):
-		return str(self.__dict__)
+		res = ""
+		for k in self.__dict__:
+			res += "{}: {}\n".format(k, self.__dict__[k])
+		return res
 
 	def __repr__(self):
-		return str(self.__dict__)
+		res = ""
+		for k in self.__dict__:
+			res += "{}: {}\n".format(k, self.__dict__[k])
+		return res
 
 	def create_dir(self, dir_path):
 
@@ -64,7 +71,8 @@ def parse_args():
 
 	# Experiment Related Options
 	parser.add_argument('--log', action="store_true", default=False, help="Whether to log the results or not")
-	parser.add_argument('--expt_res_dir', type=str, help="Path to directory where all the data related to the experiment will be stored")
+	parser.add_argument('--expt_res_base_dir', type=str, help="Path to base directory where all the results and logs related to the experiment will be stored")
+	parser.add_argument('--expt_name', type=str, help="Name of the experiment to uniquely identify its folder")
 	parser.add_argument('--expt_data_dir', type=str, help="The path which contains most of the data required for the experiment")
 	parser.add_argument('--feats_data_dir', type=str, help="The path of the directory containing image and object features")
 	
