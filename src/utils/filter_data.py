@@ -21,6 +21,8 @@ def get_args():
 	parser.add_argument('--inp_sg_data_dir', type=str, help="Path to the data directory where the Scene Graph json files are stored")
 	parser.add_argument('--out_data_dir', type=str, help="Path of the directory where the filtered data will be stored")
 	parser.add_argument('--pct', type=int, help="Percentage of original to be used")
+	parser.add_argument('--choices', type=str, required=True, help="The path to val choices file that will be used for evaluating metrics other than accuracy")
+
 	return parser.parse_args()
 
 def save_scene_graphs(img_ids, inp_split, out_split, args):
@@ -41,12 +43,35 @@ def write_data(data, img_ids, qa_ids, split_name, args):
 
 	new_data = {}
 	for idx in new_qa_ids:
-		new_data[idx] = data[idx]
+		qdata = data[idx]
 
+		# Filter the set of entailed questions
+		qdata['entailed'] = list(set(data[idx]['entailed']) & new_qa_ids)
+
+		# Filter the set of equivalent questions
+		qdata['equivalent'] = list(set(data[idx]['equivalent']) & new_qa_ids)
+
+		new_data[idx] = qdata
+		
 	print('{} QA Size: {}, No. of Images: {}'.format(split_name, len(new_data), len(img_ids)))
 
 	with open(os.path.join(args.out_data_dir, '{}_{}_data.json'.format(args.dataset, split_name)), 'w') as f:
 		json.dump(new_data, f, indent=4)
+
+def write_choices(qa_ids, split_name, args):
+	"""
+	Filter the choices from the original file based on the questions present in the current qa_ids split.
+	"""
+
+	with open(args.choices, 'r') as f:
+		choices = json.load(f)
+
+	new_choices = {}
+	for qid in qa_ids:
+		new_choices[qid] = choices[qid]
+
+	with open(os.path.join(args.out_data_dir, '{}_choices.json'.format(split_name)), 'w') as f:
+		json.dump(new_choices, f)
 
 def filter_qa(split, args):
 
@@ -96,6 +121,7 @@ def filter_qa(split, args):
 		
 		write_data(data, permute, qa_ids, 'test', args)
 		save_scene_graphs(permute, 'val', 'test', args)
+		write_choices(qa_ids, 'test', args)
 
 if __name__ == "__main__":
 

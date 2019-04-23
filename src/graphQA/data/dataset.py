@@ -35,6 +35,13 @@ class GQADataset(Dataset):
 		self.image_features_h5 = h5py.File(image_features_path, 'r')['features']
 		
 		self.vocab = utils.load_vocab(vocab_json)
+
+		# Temporary fix
+		self.vocab['idx_to_answer_token'] = {}
+		for ans_txt in self.vocab['answer_token_to_idx']:
+			ans_idx = self.vocab['answer_token_to_idx'][ans_txt]
+			self.vocab['idx_to_answer_token'][ans_idx] = ans_txt
+
 		self.relations_vocab = utils.load_vocab(relations_vocab_json)
 
 		self.meta_data = utils.load_vocab(meta_data_json)
@@ -174,4 +181,5 @@ class GQADataset(Dataset):
 				'num_objs': num_objs,
 				'A': torch.as_tensor(A, dtype=torch.float),
 				'image_feat': torch.as_tensor(image_feat, dtype=torch.float),
+				'ques_id': idx,
 			}
