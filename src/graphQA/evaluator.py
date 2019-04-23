@@ -24,6 +24,8 @@ class Evaluator:
 		self.device = self.args.device		
 		self.data_loader = DataLoader(dataset=self.dataset, batch_size=self.args.bsz, shuffle=True, num_workers=4)
 
+		self.get_preds = self.args.get_preds
+
 	def eval(self):
 
 		print('Initiating Evaluation')
@@ -33,6 +35,11 @@ class Evaluator:
 
 		loss = 0.0
 		accuracies = []
+
+		if self.get_preds:
+			preds_list = []
+		else:
+			preds_list = None
 
 		for i, batch in enumerate(self.data_loader):
 
@@ -47,12 +54,16 @@ class Evaluator:
 			num_obj = batch['num_objs'].to(self.device)[sorted_indices] 
 			ans_output = batch['ans'].to(self.device)[sorted_indices]
 			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
+			ques_ids = batch['ques_id'].to(self.device)[sorted_indices]
 
 			accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
 
+			if self.get_preds:
+				preds_list += self.extract_preds(ans_distrib.detach().cpu().numpy(), ques_ids.cpu().numpy())
+
 		acc = np.mean(accuracies)
 		print("Evaluation Accuracy: {}".format(acc))
-		self.write_stats(acc)
+		self.write_stats(acc, preds_list)
 			
 	def get_accuracy(self, preds, correct):
 
@@ -73,13 +84,35 @@ class Evaluator:
 		acc = np.equal(pred_ids.reshape(-1), correct_ids)
 		return acc
 	
-	def write_stats(self, acc):
+	def extract_preds(self, ans_distrib, ques_ids):
+
+		preds_list = []
+		pred_ids = np.argmax(ans_distrib, axis = -1)
+
+		for j in range(len(ques_ids)):
+			
+			answer_text = self.dataset.vocab['idx_to_answer_token'][pred_ids[j]]
+
+			pred_obj = {
+				'questionId': self.dataset.questions_keys[ques_ids[j]],
+				'prediction': answer_text
+			}
+
+			preds_list.append(pred_obj)
+
+		return preds_list
+
+	def write_stats(self, acc, preds_list=None):
 
 		stats_file = os.path.join(self.args.expt_res_dir, 'test_stats.json')
 		stats = {'acc' : acc}
 
 		with open(stats_file, 'w') as f:
 			json.dump(stats, f, indent=4)
+
+		if self.get_preds:
+			with open(os.path.join(self.args.expt_res_dir, 'test_preds.json'), 'w') as f:
+				json.dump(preds_list, f)
 
 	def load_ckpt(self):
 		"""

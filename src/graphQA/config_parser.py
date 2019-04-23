@@ -78,6 +78,7 @@ def parse_args():
 	parser.add_argument('--expt_name', type=str, help="Name of the experiment to uniquely identify its folder")
 	parser.add_argument('--expt_data_dir', type=str, help="The path which contains most of the data required for the experiment")
 	parser.add_argument('--feats_data_dir', type=str, help="The path of the directory containing image and object features")
+	parser.add_argument('--get_preds', default=False, action="store_true", help="Flag to indicate if the evaluator should store the predictions as well")
 	
 	parser.add_argument('--mode', type=str, required=True, help="Specify the mode: {train, eval}")
 	parser.add_argument('--num_epochs', default=10, type=int, help="The number of epochs for training the model")
