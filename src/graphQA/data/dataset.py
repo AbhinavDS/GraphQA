@@ -36,12 +36,6 @@ class GQADataset(Dataset):
 		
 		self.vocab = utils.load_vocab(vocab_json)
 
-		# Temporary fix
-		self.vocab['idx_to_answer_token'] = {}
-		for ans_txt in self.vocab['answer_token_to_idx']:
-			ans_idx = self.vocab['answer_token_to_idx'][ans_txt]
-			self.vocab['idx_to_answer_token'][ans_idx] = ans_txt
-
 		self.relations_vocab = utils.load_vocab(relations_vocab_json)
 
 		self.meta_data = utils.load_vocab(meta_data_json)
