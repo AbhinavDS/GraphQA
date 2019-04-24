@@ -98,13 +98,14 @@ class Trainer:
 			self.log_stats(loss, val_loss, train_acc, val_acc, epoch)
 			print('Valid Epoch: {}, Val Acc: {}'.format(epoch, val_acc))
 			if val_acc > self.best_val_acc:
-				print('Saving new model. Better than previous accuracy: {}'.format(self.best_val_acc))
+				print('Saving new best model. Better than previous accuracy: {}'.format(self.best_val_acc))
 				self.best_val_acc = val_acc
 				# Initiate Model Checkpointing
-				self.save_ckpt()
-				self.write_status(epoch, self.best_val_acc)
 			else:
-				print ('Not saving model.')
+				print ('Not saving as best model.')
+			self.save_ckpt(save_best=(val_acc==self.best_val_acc))
+			self.write_status(epoch, self.best_val_acc)
+			
 	
 	def eval(self):
 
@@ -216,7 +217,7 @@ class Trainer:
 		ckpt = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
 		self.model.load_state_dict(ckpt['state_dict'])
 
-	def save_ckpt(self):
+	def save_ckpt(self, save_best=False):
 
 		"""
 		Saves the model checkpoint at the correct directory path
@@ -233,4 +234,7 @@ class Trainer:
 
 		torch.save(model_dict, ckpt_path)
 
+		if save_best:
+			best_ckpt_path = os.path.join(self.args.ckpt_dir, '{}_best.ckpt'.format(model_name))
+			torch.save(model_dict, best_ckpt_path)
 
