@@ -67,7 +67,7 @@ class BottomUpGCN(nn.Module):
 		
 		if self.bidirectional:
 			ques_emb = torch.cat([ques_hidden[-2, :, :], ques_hidden[-1, :, :]], 1)
-			ques_emb = self.dropout(self.ques_proj(ques_emb))
+			ques_emb = self.dropout_layer(self.ques_proj(ques_emb))
 		else:
 			ques_emb = ques_hidden[-1, :, :]
 
