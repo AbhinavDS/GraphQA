@@ -16,12 +16,12 @@ import utils.utils as utils
 
 class BottomUpGCN(nn.Module):
 
-	def __init__(self, args, word2vec=None):
+	def __init__(self, args, word2vec=None, rel_word2vec=None):
 
 		super(BottomUpGCN, self).__init__()
 		
 		if args.use_rel_emb:
-			self.gcn = GCNRelation(args)
+			self.gcn = GCNRelation(args, rel_word2vec=rel_word2vec)
 		else:
 			self.gcn = GCN(args)
 		self.ques_encoder = QuesEncoder(args.ques_vocab_sz, args.max_ques_len, args.ques_word_vec_dim, args.n_ques_emb, args.n_ques_layers, input_dropout_p=args.drop_prob, dropout_p=args.drop_prob, bidirectional=args.bidirectional, variable_lengths=args.variable_lengths, word2vec=word2vec)

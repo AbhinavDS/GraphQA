@@ -37,12 +37,16 @@ class GQADataset(Dataset):
 		self.vocab = utils.load_vocab(vocab_json)
 
 		self.relations_vocab = utils.load_vocab(relations_vocab_json)
+		self.rel_embeddings_mat = None
 
 		self.meta_data = utils.load_vocab(meta_data_json)
 
 		if args.use_glove:
 			self.word2vec_path = args.word2vec_path
 			self.ques_word_vec_dim = args.ques_word_vec_dim
+			if self.args.use_rel_emb:
+				self.rel_word2vec_path = args.rel_word2vec_path
+				self.rel_emb_dim = args.rel_emb_dim
 			self.load_embeddings()
 
 		print("Data Read successful", len(self.questions_keys))
@@ -78,6 +82,16 @@ class GQADataset(Dataset):
 				self.embeddings_mat[self.vocab['question_token_to_idx'][word]] = np.array(embedding_dict[word])
 
 		self.embeddings_mat = torch.as_tensor(self.embeddings_mat, dtype=torch.float)
+
+		if self.args.use_rel_emb:
+			self.rel_embeddings_mat = np.random.normal(scale=0.6, size=(len(self.relations_vocab['relation_token_to_idx']), self.rel_emb_dim))
+
+			with open(self.rel_word2vec_path, 'r') as f:
+				rel_embedding_dict = json.load(f)
+				for word in rel_embedding_dict:
+					self.rel_embeddings_mat[self.relations_vocab['relation_token_to_idx'][word]] = np.array(rel_embedding_dict[word])
+
+			self.rel_embeddings_mat = torch.as_tensor(self.rel_embeddings_mat, dtype=torch.float)
 
 	def __len__(self):
 		return len(self.questions)
