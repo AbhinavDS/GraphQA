@@ -11,7 +11,6 @@
 17. Run Mac Network (AG)
 18. Run on 5p data
 19. Add sample config to git
-20. Write evaluator for mac-network that works on test set
 21. Check if options in plausible and valid also have to be pruned based on the split.
 22. Add reverse mapping in qa and relations vocab
 

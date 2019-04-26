@@ -25,10 +25,7 @@ def get_args():
 
 	return parser.parse_args()
 
-def save_scene_graphs(img_ids, inp_split, out_split, args):
-
-	with open(os.path.join(args.inp_sg_data_dir, '{}_sceneGraphs.json'.format(inp_split)), 'r') as inp_sgf:
-		inp_sg = json.load(inp_sgf)
+def save_scene_graphs(img_ids, inp_sg, inp_split, out_split, args):
 
 	out_sg = {}
 	for idx in img_ids:
@@ -85,6 +82,9 @@ def filter_qa(split, args):
 
 	with open(data_path, 'r') as f:
 		data = json.load(f)
+
+	with open(os.path.join(args.inp_sg_data_dir, '{}_sceneGraphs.json'.format(split)), 'r') as inp_sgf:
+		inp_sg = json.load(inp_sgf)
 		
 	# Current Function is to first filter all the questions of query type
 	if split == "train":
@@ -93,7 +93,13 @@ def filter_qa(split, args):
 		pct = float(args.pct) / 100
 
 	qa_ids = [ x for x in data if data[x]['types']['structural'] == 'query' ]
-	image_ids = list(set([ data[x]['imageId'] for x in qa_ids ]))
+	filtered_image_ids = list(set([ data[x]['imageId'] for x in qa_ids ]))
+	image_ids = []
+	for img_id in filtered_image_ids:
+		for obj in inp_sg[img_id]['objects']:
+			if len(inp_sg[img_id]['objects'][obj]['relations']) > 0:
+				image_ids.append(img_id)
+				break
 
 	qa_sz = len(qa_ids)
 	img_sz = len(image_ids)
@@ -114,18 +120,21 @@ def filter_qa(split, args):
 		write_data(data, train_ids, qa_ids, 'train', args)
 		write_data(data, val_ids, qa_ids, 'val', args)
 
-		save_scene_graphs(train_ids, 'train', 'train', args)
-		save_scene_graphs(val_ids, 'train', 'val', args)
+		save_scene_graphs(train_ids, inp_sg, 'train', 'train', args)
+		save_scene_graphs(val_ids, inp_sg, 'train', 'val', args)
 
 	else:
 		
 		write_data(data, permute, qa_ids, 'test', args)
-		save_scene_graphs(permute, 'val', 'test', args)
+		save_scene_graphs(permute, inp_sg, 'val', 'test', args)
 		write_choices(qa_ids, 'test', args)
 
 if __name__ == "__main__":
 
 	args = get_args()
+
+	if not os.path.exists(args.out_data_dir):
+		os.makedirs(args.out_data_dir)
 	
 	filter_qa('train', args)
 	filter_qa('val', args)

@@ -297,6 +297,9 @@ def encode_relationships(rel_data, token_to_idx, obj_data):
     obj_filtered = 0
     predicate_filtered = 0
     duplicate_filtered = 0
+
+    valid_img_ids = []
+
     for i, img in enumerate(rel_data):
         im_to_first_rel[i] = rel_idx_counter
         id_to_idx = obj_data[i]['id_to_idx']  # object id to object list idx
@@ -329,13 +332,16 @@ def encode_relationships(rel_data, token_to_idx, obj_data):
             no_rel_counter += 1
         else:
             im_to_last_rel[i] = rel_idx_counter - 1
+            valid_img_ids.append(str(img['image_id']))
     print('%i rel is filtered by object' % obj_filtered)
     print('%i rel is filtered by predicate' % predicate_filtered)
     print('%i rel is filtered by duplicate' % duplicate_filtered)
     print('%i rel remains ' % len(encoded_pred))
 
     print('%i out of %i valid images have relationships' % (len(rel_data)-no_rel_counter, len(rel_data)))
-    return np.vstack(encoded_pred), np.vstack(encoded_rel), im_to_first_rel, im_to_last_rel
+    print('Valid Images: {}'.format(len(valid_img_ids)))
+
+    return np.vstack(encoded_pred), np.vstack(encoded_rel), im_to_first_rel, im_to_last_rel, valid_img_ids
 
 
 def sentence_preprocess(phrase):
@@ -575,7 +581,7 @@ def main(args):
     f.create_dataset('img_to_first_box', data=im_to_first_obj)
     f.create_dataset('img_to_last_box', data=im_to_last_obj)
 
-    encoded_predicate, encoded_rel, im_to_first_rel, im_to_last_rel = \
+    encoded_predicate, encoded_rel, im_to_first_rel, im_to_last_rel, valid_img_ids = \
     encode_relationships(rel_data, predicate_to_idx, obj_data)
 
     f.create_dataset('predicates', data=encoded_predicate)
@@ -613,22 +619,26 @@ def main(args):
     with open(args.json_file, 'w') as f:
         json.dump(json_struct, f)
 
+    with open(args.valid_img_file, 'w') as f:
+        json.dump(valid_img_ids, f)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--imdb', default="/scratch/cluster/ankgarg/gqa/vg_test_1p/imdb_1024.h5", type=str)
-    parser.add_argument('--object_input', default="/scratch/cluster/ankgarg/gqa/vg_test_1p/obj_data.json", type=str)
-    parser.add_argument('--relationship_input', default="/scratch/cluster/ankgarg/gqa/vg_test_1p/rel_data.json", type=str)
-    parser.add_argument('--metadata_input', default="/scratch/cluster/ankgarg/gqa/vg_test_1p/img_metadata.json", type=str)
-    parser.add_argument('--object_list', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/obj_list.txt', type=str)
-    parser.add_argument('--pred_list', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/pred_list.txt', type=str)
-    parser.add_argument('--object_alias', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/object_alias.txt', type=str)
-    parser.add_argument('--pred_alias', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/predicate_alias.txt', type=str)
+    parser.add_argument('--imdb', default="/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/imdb_1024.h5", type=str)
+    parser.add_argument('--object_input', default="/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/obj_data.json", type=str)
+    parser.add_argument('--relationship_input', default="/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/rel_data.json", type=str)
+    parser.add_argument('--metadata_input', default="/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/img_metadata.json", type=str)
+    parser.add_argument('--object_list', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/obj_list.txt', type=str)
+    parser.add_argument('--pred_list', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/pred_list.txt', type=str)
+    parser.add_argument('--object_alias', default='/scratch/cluster/ankgarg/gqa/dataset/alias/object_alias.txt', type=str)
+    parser.add_argument('--pred_alias', default='/scratch/cluster/ankgarg/gqa/dataset/alias/predicate_alias.txt', type=str)
     parser.add_argument('--num_objects', default=0, type=int, help="set to 0 to disable filtering")
     parser.add_argument('--num_predicates', default=0, type=int, help="set to 0 to disable filtering")
-    parser.add_argument('--min_box_area_frac', default=0.002, type=float)
-    parser.add_argument('--json_file', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/VG-dicts.json')
-    parser.add_argument('--h5_file', default='/scratch/cluster/ankgarg/gqa/vg_test_1p/VG.h5')
+    parser.add_argument('--min_box_area_frac', default=0.0, type=float)
+    parser.add_argument('--json_file', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/VG-dicts.json')
+    parser.add_argument('--h5_file', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/VG.h5')
+    parser.add_argument('--valid_img_file', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/valid_img_ids.json')
     parser.add_argument('--load_frac', default=1, type=float)
     parser.add_argument('--use_input_split', default=True, type=bool)
     parser.add_argument('--train_frac', default=0.7, type=float)
