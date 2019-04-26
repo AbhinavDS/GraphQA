@@ -15,25 +15,27 @@ class GQADataset(Dataset):
 		
 		question_json_path = self.args.qa_data_path[qa_data_key]
 		scene_graph_json_path = self.args.sg_data_path[sg_data_key]
-		image_features_path = self.args.img_feat_data_path
+		self.image_features_path = self.args.img_feat_data_path
 		image_info_json_path = self.args.img_info_path
 		vocab_json = self.args.word_vocab_path
 		relations_vocab_json = self.args.rel_vocab_path
 		meta_data_json = self.args.meta_data_path
+		valid_img_ids_path = self.args.valid_img_ids_path
 
 		with open(question_json_path, 'r') as qf:
 			self.questions = json.load(qf)
 
-		self.questions_keys = list(self.questions.keys())
-		
+		with open(valid_img_ids_path, 'r') as vf:
+			self.valid_img_ids = json.load(vf)
+
+		self.questions_keys = list([qk for qk in self.questions.keys() if self.questions[qk]['imageId'] in self.valid_img_ids])
+				
 		with open(scene_graph_json_path, 'r') as sgf:
 			self.scene_graphs = json.load(sgf)
 		
 		with open(image_info_json_path, 'r') as img_if:
 			self.image_info = json.load(img_if)
-		
-		self.image_features_h5 = h5py.File(image_features_path, 'r')['features']
-		
+				
 		self.vocab = utils.load_vocab(vocab_json)
 
 		self.relations_vocab = utils.load_vocab(relations_vocab_json)
@@ -94,13 +96,14 @@ class GQADataset(Dataset):
 			self.rel_embeddings_mat = torch.as_tensor(self.rel_embeddings_mat, dtype=torch.float)
 
 	def __len__(self):
-		return len(self.questions)
+		return len(self.questions_keys)
 
 	def __getitem__(self, idx):
 		if idx >= len(self):
 			raise ValueError('index %d out of range (%d)' % (idx, len(self)))
 		
 		key = self.questions_keys[idx]
+		image_features_h5 = h5py.File(self.image_features_path, 'r')['features']
 
 		# QA
 		question = self.questions[key]['question']
@@ -167,7 +170,7 @@ class GQADataset(Dataset):
 		num_objs += 1
 		# Get image feature from image
 		h5_idx = self.image_info[image_idx]['index']
-		image_feat = torch.as_tensor(self.image_features_h5[h5_idx], dtype = torch.float)
+		image_feat = torch.as_tensor(image_features_h5[h5_idx], dtype = torch.float)
 		spatial_width = image_feat.size(-1)
 		spatial_height = image_feat.size(-2)
 		objects[:,0] *= (spatial_width-1)

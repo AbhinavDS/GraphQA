@@ -36,6 +36,7 @@ class Config(object):
 		self.word2vec_path = os.path.join(self.expt_data_dir, 'glove.{}d.json'.format(self.ques_word_vec_dim))
 		self.rel_word2vec_path = os.path.join(self.expt_data_dir, 'rel_glove.{}d.json'.format(self.rel_emb_dim))
 
+		self.valid_img_ids_path = os.path.join(self.expt_data_dir, 'vg_data', 'valid_img_ids.json')
 		self.expt_res_dir = os.path.join(self.expt_res_base_dir, self.expt_name)
 		self.log_dir = os.path.join(self.expt_res_dir, 'logs')
 		self.ckpt_dir = os.path.join(self.expt_res_dir, 'ckpt')

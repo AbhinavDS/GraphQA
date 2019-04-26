@@ -39,9 +39,9 @@ class Trainer:
 		self.set_criterion()
 		self.lr = self.args.lr
 		
-		self.train_loader = DataLoader(dataset = self.train_dataset, batch_size=self.args.bsz, shuffle=True, num_workers=1)
+		self.train_loader = DataLoader(dataset = self.train_dataset, batch_size=self.args.bsz, shuffle=True, num_workers=4)
 
-		self.val_loader = DataLoader(dataset=self.val_dataset, batch_size=self.args.bsz, shuffle=True, num_workers=1)
+		self.val_loader = DataLoader(dataset=self.val_dataset, batch_size=self.args.bsz, shuffle=True, num_workers=4)
 
 		self.log = args.log
 		if self.log:

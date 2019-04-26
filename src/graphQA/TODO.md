@@ -12,4 +12,6 @@
 18. Run on 5p data
 19. Add sample config to git
 
+21. Check if options in plausible and valid also have to be pruned based on the split.
+
 ## PERMISSION DENIED SOLVE IT (IMMM)
