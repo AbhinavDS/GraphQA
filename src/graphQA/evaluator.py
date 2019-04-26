@@ -122,7 +122,9 @@ class Evaluator:
 		# TODO: Maybe load args as well from the checkpoint
 
 		model_name = self.model.__class__.__name__
-		ckpt_path = os.path.join(self.args.ckpt_dir, '{}.ckpt'.format(model_name))
-
+		ckpt_path = os.path.join(self.args.ckpt_dir, '{}_best.ckpt'.format(model_name))
+		if not os.path.exists(ckpt_path):
+			print ("!!!Best model path not found. Using last epoch model instead!!!")
+			ckpt_path = os.path.join(self.args.ckpt_dir, '{}_best.ckpt'.format(model_name))
 		ckpt = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
 		self.model.load_state_dict(ckpt['state_dict'])

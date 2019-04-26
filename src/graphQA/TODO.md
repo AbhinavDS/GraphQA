@@ -6,12 +6,11 @@
 
 13. Evaluation metrics (AG)
 14. Gofai (W)
-15. check rel embed with glove, rel embed normal, model run with generated scene graph (AD)
+15. check rel embed with glove, (AD)
 16. Check if no question id is being entailed from outside a data split (AG)
 17. Run Mac Network (AG)
 18. Run on 5p data
 19. Add sample config to git
 21. Check if options in plausible and valid also have to be pruned based on the split.
-22. Add reverse mapping in qa and relations vocab
 
 ## PERMISSION DENIED SOLVE IT (IMMM)
