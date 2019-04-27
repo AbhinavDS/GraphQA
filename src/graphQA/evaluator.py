@@ -91,7 +91,7 @@ class Evaluator:
 
 		for j in range(len(ques_ids)):
 			
-			answer_text = self.dataset.vocab['idx_to_answer_token'][pred_ids[j]]
+			answer_text = self.dataset.vocab['answer_idx_to_token'][pred_ids[j]]
 
 			pred_obj = {
 				'questionId': self.dataset.questions_keys[ques_ids[j]],
