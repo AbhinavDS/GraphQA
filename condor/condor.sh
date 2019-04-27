@@ -56,7 +56,7 @@ Queue 1
 # Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g5_bce_tanh.log
 # Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g5_bce_tanh.err
 # Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g5_bce_tanh.out
-# Arguments = run.sh --expt_name=5p_gold_g5_bce_tanh --gcn_depth=5  --critierion=bce -nl=gated_tanh --bsz=128
+# Arguments = run.sh --expt_name=5p_gold_g5_bce_tanh --gcn_depth=5  --critierion=bce --nl=gated_tanh --bsz=128
 # Queue 1
 
 # Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g5_img.log

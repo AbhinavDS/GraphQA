@@ -116,5 +116,7 @@ def parse_args():
 
 	# Options for Attention Model
 	parser.add_argument('--use_img_feats', action="store_true", default=False, help="Use Average Image Features in Attention Model")
+	parser.add_argument('--pool_w', default=20, type=int, help="Pooling width for Image features in Attention Module")
+	parser.add_argument('--pool_h', default=15, type=int, help="Pooling height for Image features in Attention Module")
 
 	return parser.parse_args(namespace = args)

@@ -23,7 +23,7 @@ class TopDownAttention(nn.Module):
 		self.use_img_feats = args.use_img_feats
 
 		if self.use_img_feats:
-			self.img_size = 7
+			self.img_size = (args.pool_w, args.pool_h)
 			self.avg_pool = nn.AvgPool2d(self.img_size)
 			self.attn_gate = NonLinearity(2 * args.n_img_feats + args.n_ques_emb, args.n_attn, args.nl, args.drop_prob)
 		else:
