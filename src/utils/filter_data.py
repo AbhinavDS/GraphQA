@@ -86,6 +86,10 @@ def filter_qa(split, args):
 	with open(os.path.join(args.inp_sg_data_dir, '{}_sceneGraphs.json'.format(split)), 'r') as inp_sgf:
 		inp_sg = json.load(inp_sgf)
 		
+
+	with open(os.path.join(args.inp_sg_data_dir, 'invalid_img_ids.json'), 'r') as invf:
+		invalid_img_ids = json.load(invf)
+
 	# Current Function is to first filter all the questions of query type
 	if split == "train":
 		pct = float(args.pct) / 80
@@ -93,7 +97,7 @@ def filter_qa(split, args):
 		pct = float(args.pct) / 100
 
 	qa_ids = [ x for x in data if data[x]['types']['structural'] == 'query' ]
-	filtered_image_ids = list(set([ data[x]['imageId'] for x in qa_ids ]))
+	filtered_image_ids = list(set([ data[x]['imageId'] for x in qa_ids ]) - set(invalid_img_ids))
 	image_ids = []
 	for img_id in filtered_image_ids:
 		for obj in inp_sg[img_id]['objects']:
