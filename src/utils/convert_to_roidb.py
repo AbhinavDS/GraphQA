@@ -208,7 +208,7 @@ def encode_box(region, org_h, org_w, im_long_size):
     scale = float(im_long_size) / max(org_h, org_w)
     image_size = im_long_size
     # recall: x,y are 1-indexed
-    x, y = math.floor(scale*(region['x']-1)), math.floor(scale*(region['y']-1))
+    x, y = math.floor(scale*(region['x'])), math.floor(scale*(region['y']))
     w, h = math.ceil(scale*region['w']), math.ceil(scale*region['h'])
 
     # clamp to image
@@ -227,8 +227,8 @@ def encode_box(region, org_h, org_w, im_long_size):
 
     # also convert to center-coord oriented
     box = np.asarray([x+floor(w/2), y+floor(h/2), w, h], dtype=np.int32)
-    assert box[2] > 0  # width height should be positive numbers
-    assert box[3] > 0
+    assert box[2] > 0, '{}, {}, {}, {}, {}, {}, {}'.format(box, region['x'], region['y'], region['w'], region['h'], org_h, org_w) # width height should be positive numbers
+    assert box[3] > 0, '{}, {}, {}, {}, {}, {}, {}'.format(box, region['x'], region['y'], region['w'], region['h'], org_h, org_w)
     return box
 
 
@@ -561,12 +561,6 @@ def main(args):
     predicate_tokens, predicate_token_counter = extract_predicate_token(rel_data, args.num_predicates, pred_list)
     predicate_to_idx, idx_to_predicate = build_token_dict(predicate_tokens)
 
-    # print out vocabulary
-    print('objects: ')
-    print(object_token_counter)
-    print('relationships: ')
-    print(predicate_token_counter)
-
     # write the h5 file
     f = h5.File(args.h5_file, 'w')
 
@@ -625,20 +619,20 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--imdb', default="/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/imdb_1024.h5", type=str)
-    parser.add_argument('--object_input', default="/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/obj_data.json", type=str)
-    parser.add_argument('--relationship_input', default="/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/rel_data.json", type=str)
-    parser.add_argument('--metadata_input', default="/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/img_metadata.json", type=str)
-    parser.add_argument('--object_list', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/obj_list.txt', type=str)
-    parser.add_argument('--pred_list', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/pred_list.txt', type=str)
+    parser.add_argument('--imdb', default="/scratch/cluster/ankgarg/gqa/test_data/5p/vg_data/imdb_1024.h5", type=str)
+    parser.add_argument('--object_input', default="/scratch/cluster/ankgarg/gqa/test_data/5p/vg_data/obj_data.json", type=str)
+    parser.add_argument('--relationship_input', default="/scratch/cluster/ankgarg/gqa/test_data/5p/vg_data/rel_data.json", type=str)
+    parser.add_argument('--metadata_input', default="/scratch/cluster/ankgarg/gqa/test_data/5p/vg_data/img_metadata.json", type=str)
+    parser.add_argument('--object_list', default='/scratch/cluster/ankgarg/gqa/test_data/5p/vg_data/obj_list.txt', type=str)
+    parser.add_argument('--pred_list', default='/scratch/cluster/ankgarg/gqa/test_data/5p/vg_data/pred_list.txt', type=str)
     parser.add_argument('--object_alias', default='/scratch/cluster/ankgarg/gqa/dataset/alias/object_alias.txt', type=str)
     parser.add_argument('--pred_alias', default='/scratch/cluster/ankgarg/gqa/dataset/alias/predicate_alias.txt', type=str)
     parser.add_argument('--num_objects', default=0, type=int, help="set to 0 to disable filtering")
     parser.add_argument('--num_predicates', default=0, type=int, help="set to 0 to disable filtering")
     parser.add_argument('--min_box_area_frac', default=0.0, type=float)
-    parser.add_argument('--json_file', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/VG-dicts.json')
-    parser.add_argument('--h5_file', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/VG.h5')
-    parser.add_argument('--valid_img_file', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/valid_img_ids.json')
+    parser.add_argument('--json_file', default='/scratch/cluster/ankgarg/gqa/test_data/5p/vg_data/VG-dicts.json')
+    parser.add_argument('--h5_file', default='/scratch/cluster/ankgarg/gqa/test_data/5p/vg_data/VG.h5')
+    parser.add_argument('--valid_img_file', default='/scratch/cluster/ankgarg/gqa/test_data/5p/vg_data/valid_img_ids.json')
     parser.add_argument('--load_frac', default=1, type=float)
     parser.add_argument('--use_input_split', default=True, type=bool)
     parser.add_argument('--train_frac', default=0.7, type=float)
