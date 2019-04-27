@@ -109,7 +109,7 @@ def main(args):
 				word2vec[key] = split_key
 			if (len(word2vec[key]) != 1):
 				print (key, word2vec[key],longest_word)
-				word2vec[key] = ''
+				word2vec[key] = longest_word
 			else:
 				word2vec[key] = word2vec[key][0]
 
