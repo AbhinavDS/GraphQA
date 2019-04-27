@@ -4,7 +4,7 @@ import torch
 from torch.autograd import Variable
 
 class GCN(nn.Module):
-	def __init__(self, args):
+	def __init__(self, args, rel_word2vec=None):
 		super(GCN, self).__init__()
 		self.device = args.device
 		self.n_img_feats = args.n_img_feats
@@ -17,7 +17,14 @@ class GCN(nn.Module):
 			self.add_layer(nn.Linear(self.n_img_feats,self.n_img_feats))
 			self.add_layer(nn.Linear(self.n_img_feats + self.rel_emb_dim, self.n_img_feats))
 		self.a = nn.Tanh()
-		self.relation_embedding = nn.Embedding(self.max_rels, self.rel_emb_dim)
+		if rel_word2vec is not None:
+			print('Using Pre-trained Word2vec for Relation')
+			assert rel_word2vec.size(0) == self.max_rels
+			assert rel_word2vec.size(1) == self.rel_emb_dim
+			self.relation_embedding = nn.Embedding(self.max_rels, self.rel_emb_dim)
+			self.relation_embedding.weight = nn.Parameter(rel_word2vec)
+		else:
+			self.relation_embedding = nn.Embedding(self.max_rels, self.rel_emb_dim)
 	
 	def add_layer(self,layer,init=True):
 		self.layers.append(layer)

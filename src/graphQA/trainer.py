@@ -24,7 +24,11 @@ class Trainer:
 
 		if self.use_glove:
 			self.embeddings_mat = self.train_dataset.embeddings_mat
-			self.model = BottomUpGCN(args, self.embeddings_mat)
+			if self.args.use_rel_emb:
+				self.rel_embeddings_mat = self.train_dataset.rel_embeddings_mat
+				self.model = BottomUpGCN(args, word2vec=self.embeddings_mat, rel_word2vec=self.rel_embeddings_mat)
+			else:
+				self.model = BottomUpGCN(args, word2vec=self.embeddings_mat)
 		else:
 			self.model = BottomUpGCN(args)
 

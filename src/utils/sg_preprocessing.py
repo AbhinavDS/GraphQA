@@ -2,18 +2,20 @@ import os
 import argparse
 import json
 import numpy as np
+from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS as stop_words
 
 from . import preprocess as preprocess_utils
 from . import utils as utils
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_relations_path', required=True)
+parser.add_argument('--inp_word2vec_path', required=True)
 parser.add_argument('--input_vocab_json', default='')
 parser.add_argument('--expand_vocab', default=0, type=int)
 parser.add_argument('--unk_threshold', default=0, type=int)
-parser.add_argument('--output_vocab_path', default='')
-parser.add_argument('--meta_data_path', default='')
+parser.add_argument('--output_vocab_path', default='', required=True)
+parser.add_argument('--meta_data_path', default='', required=True)
+parser.add_argument('--out_word2vec_path', default='')
 
 
 def main(args):
@@ -83,6 +85,59 @@ def main(args):
 	with open(args.meta_data_path, 'w') as f:
 		json.dump(meta_vocab, f)
 
+	if args.inp_word2vec_path != "":
+		word2vec = {}
+		args.stop_words = set(args.stop_words)
+		args.stop_words.add('near')
+		args.stop_words.add('alongside')
+		args.stop_words = frozenset(args.stop_words)
+		for key in vocab['relation_token_to_idx'].keys():
+			word2vec[key] = []
+			split_key =  key.strip().split()
+			if len(split_key) > 1:
+				longest_word = ''   
+				for token in split_key:
+					if(len(longest_word) < len(token)):
+						longest_word = token
+					if token in args.stop_words:
+						pass
+					else:
+						word2vec[key].append(token)
+				if len(word2vec[key]) == 0:
+					word2vec[key] = [longest_word]
+			else:
+				word2vec[key] = split_key
+			if (len(word2vec[key]) != 1):
+				print (key, word2vec[key],longest_word)
+				word2vec[key] = ''
+			else:
+				word2vec[key] = word2vec[key][0]
+
+		reversemap = {}
+		for key in word2vec:
+			if word2vec[key] in reversemap:
+				reversemap[word2vec[key]].append(key)
+			else:
+				reversemap[word2vec[key]] = [key]
+		# Load the input word2vec vectors and store the ones that are actually present in the vocabulary.
+		embeddings = {}
+		with open(args.inp_word2vec_path, 'r') as f:
+
+			for line in f.readlines():
+				line = line.replace('\r', '').replace('\n', '').split()
+				word = line[0].lower()
+				vector = line[1:]
+				if word in reversemap:
+					for key in reversemap[word]:
+						embeddings[key] = vector
+
+		missed = len( set(vocab['relation_token_to_idx']) - set(embeddings.keys()))
+		print('Missed {}/{} words in Pre-Trained embeddings'.format(missed, len(vocab['relation_token_to_idx'])))
+		
+		with open(args.out_word2vec_path, 'w') as f:
+			json.dump(embeddings, f)
+
 if __name__ == '__main__':
 	args = parser.parse_args()
+	args.stop_words = stop_words
 	main(args)

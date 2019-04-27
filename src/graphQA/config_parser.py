@@ -34,6 +34,8 @@ class Config(object):
 		self.word_vocab_path = os.path.join(self.expt_data_dir, 'qa_vocab.json')
 		self.meta_data_path = os.path.join(self.expt_data_dir, 'meta_data.json')
 		self.word2vec_path = os.path.join(self.expt_data_dir, 'glove.{}d.json'.format(self.ques_word_vec_dim))
+		self.rel_word2vec_path = os.path.join(self.expt_data_dir, 'rel_glove.{}d.json'.format(self.rel_emb_dim))
+
 		self.valid_img_ids_path = os.path.join(self.expt_data_dir, 'vg_data', 'valid_img_ids.json')
 		self.expt_res_dir = os.path.join(self.expt_res_base_dir, self.expt_name)
 		self.log_dir = os.path.join(self.expt_res_dir, 'logs')
@@ -103,7 +105,7 @@ def parse_args():
 	parser.add_argument('--n_img_feats', type=int, default=2048, help="The dimension of the Image Features")
 	parser.add_argument('--weights_init', default='xavier', help="The initializer for weight matrices in the network")
 	parser.add_argument('--gcn_depth', default=5, type=int, help="The depth of the GCN network")
-	parser.add_argument('--rel_emb_dim', default=64, type=int, help="The dimensionality of the relation embedding")
+	parser.add_argument('--rel_emb_dim', default=100, type=int, help="The dimensionality of the relation embedding")
 	parser.add_argument('--use_rel_emb', action="store_true", default=False, help="Use Relation Embedding")
 
 	# Options for Answering Model

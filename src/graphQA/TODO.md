@@ -4,13 +4,14 @@
 6. Functional Program learning
 7. Check if network params need to be stored
 
-13. Evaluation metrics (AG)
+12. Grounding metric
+13. Evaluation metrics - Grounding metric
 14. Gofai (W)
-15. check rel embed with glove, (AD)
+15. model run with scenegraph (AD)
 16. Check if no question id is being entailed from outside a data split (AG)
-17. Run Mac Network (AG)
 18. Run on 5p data
 19. Add sample config to git
+
 21. Check if options in plausible and valid also have to be pruned based on the split.
 22. Check Image coordinate in encode_box method in convert_to_roidb	
 
