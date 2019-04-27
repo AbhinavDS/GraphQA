@@ -69,7 +69,7 @@ def add_images(im_data, h5_file, args):
         while True:
             i, filename = q.get()
 
-            if i % 1 == 0:
+            if i % 1000 == 0:
                 print('processing %i images...' % i)
             img = imread(filename)
             # handle grayscale
