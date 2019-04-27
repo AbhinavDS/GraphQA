@@ -26,15 +26,15 @@ class Config(object):
 		self.sg_data_path = {}
 		for mode in ['train', 'val', 'test']:
 			self.qa_data_path[mode] = os.path.join(self.expt_data_dir, '{dataset}_{mode}_data.json'.format(dataset=self.dataset, mode=mode))
-			self.sg_data_path[mode] = os.path.join(self.expt_data_dir, '{mode}_sceneGraphs.json'.format(mode=mode))
+			self.sg_data_path[mode] = os.path.join(self.expt_data_dir, self.gen_mode, '{mode}_sceneGraphs.json'.format(mode=mode))
 		
 		self.img_feat_data_path = os.path.join(self.feats_data_dir, 'gqa_spatial.h5')
 		self.img_info_path = os.path.join(self.feats_data_dir, 'gqa_spatial_merged_info.json')
-		self.rel_vocab_path = os.path.join(self.expt_data_dir, 'sg_vocab.json')
+		self.rel_vocab_path = os.path.join(self.expt_data_dir, self.gen_mode, 'sg_vocab.json')
 		self.word_vocab_path = os.path.join(self.expt_data_dir, 'qa_vocab.json')
 		self.meta_data_path = os.path.join(self.expt_data_dir, 'meta_data.json')
 		self.word2vec_path = os.path.join(self.expt_data_dir, 'glove.{}d.json'.format(self.ques_word_vec_dim))
-		self.rel_word2vec_path = os.path.join(self.expt_data_dir, 'rel_glove.{}d.json'.format(self.rel_emb_dim))
+		self.rel_word2vec_path = os.path.join(self.expt_data_dir, self.gen_mode, 'rel_glove.{}d.json'.format(self.rel_emb_dim))
 
 		self.valid_img_ids_path = os.path.join(self.expt_data_dir, 'vg_data', 'valid_img_ids.json')
 		self.expt_res_dir = os.path.join(self.expt_res_base_dir, self.expt_name)
@@ -80,6 +80,7 @@ def parse_args():
 	parser.add_argument('--expt_name', type=str, help="Name of the experiment to uniquely identify its folder")
 	parser.add_argument('--expt_data_dir', type=str, help="The path which contains most of the data required for the experiment")
 	parser.add_argument('--feats_data_dir', type=str, help="The path of the directory containing image and object features")
+	parser.add_argument('--gen_mode', type=str, default="gold", choices=["gold","pred_cls","sg_cls","sg_gen"], help="The path of directory containing scenegraphs")
 	parser.add_argument('--get_preds', default=False, action="store_true", help="Flag to indicate if the evaluator should store the predictions as well")
 	
 	parser.add_argument('--mode', type=str, required=True, help="Specify the mode: {train, eval}")
@@ -92,7 +93,7 @@ def parse_args():
 	parser.add_argument('--display_every', type=int, default=1, help="Loss statistics to display after every n batches")
 	parser.add_argument('--drop_prob', default=0.0, type=float, help="Dropout probability for all linear layers")
 	
-	parser.add_argument('--nl', default='relu', help="Type of Non linearity to be used in the network (relu, gated_tanh)")
+	parser.add_argument('--nl', default='relu', choices=['relu', 'gated_tanh'], help="Type of Non linearity to be used in the network (relu, gated_tanh)")
 
 	# Options for Question Encoder
 	parser.add_argument('--n_ques_emb', type=int, default=256, help="The dimension of the hidden layer in Question Model")
