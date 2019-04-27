@@ -14,5 +14,7 @@
 20. Normalize before concatenating things
 21. Run without gcn
 22. think about meta_data file structure
+23. dropout 0.0
+24. single script file with chmod
 
 ## PERMISSION DENIED SOLVE IT (IMMM)
