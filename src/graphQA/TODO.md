@@ -12,5 +12,7 @@
 18. Run on 5p data
 19. Add sample config to git
 20. Normalize before concatenating things
+21. Run without gcn
+22. think about meta_data file structure
 
 ## PERMISSION DENIED SOLVE IT (IMMM)

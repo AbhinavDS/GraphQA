@@ -86,7 +86,7 @@ def parse_args():
 	parser.add_argument('--mode', type=str, required=True, help="Specify the mode: {train, eval}")
 	parser.add_argument('--num_epochs', default=10, type=int, help="The number of epochs for training the model")
 	parser.add_argument('--criterion', default="xce", help="The loss criterion to be used for training the model")
-	parser.add_argument('--learning_rate_decay_every', type=int, default=30, help="The schedule after which the learning is decayed by half")
+	parser.add_argument('--learning_rate_decay_every', type=int, default=100, help="The schedule after which the learning is decayed by half")
 	parser.add_argument('--lr', default=1e-3, type=float, help="The learning rate for training the architecture")
 	parser.add_argument('--bsz', default=32, type=int, help="Batch Size")
 	parser.add_argument('--use_cuda', action="store_true", default=False, help="Flag to use CUDA")
