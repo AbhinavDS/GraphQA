@@ -35,6 +35,7 @@ class BottomUpGCN(nn.Module):
 		if args.bidirectional:
 			self.ques_proj = nn.Linear(2*args.n_ques_emb, args.n_ques_emb)
 
+		self.no_gcn = args.no_gcn
 		self.use_img_feats = args.use_img_feats
 		self.max_ques_len = args.max_ques_len
 		self.max_rels = args.max_rels
@@ -60,7 +61,11 @@ class BottomUpGCN(nn.Module):
 		rois = utils.batch_roiproposals(objs, self.device)# Change this later
 		obj_feats = roi_pooling_2d(img_feats, rois, self.roi_output_size)#.detach()
 		obj_feats = self.avg_layer(obj_feats).view(objs.size(0), objs.size(1), -1)
-		gcn_obj_feats = self.gcn(obj_feats, adj_mat)
+		
+		if self.no_gcn:
+			gcn_obj_feats = obj_feats
+		else:
+			gcn_obj_feats = self.gcn(obj_feats, adj_mat)
 
 		# Obtain Question Embedding
 		ques_output, (ques_hidden, _) = self.ques_encoder(ques, ques_lens)

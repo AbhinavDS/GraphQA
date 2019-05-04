@@ -132,10 +132,11 @@ class GQADataset(Dataset):
 			object_keys = list(sg['objects'].keys())
 			for num_objs, obj_key in enumerate(object_keys):
 				obj = sg['objects'][obj_key]
-				objects[num_objs][0] = obj['x'] / width
-				objects[num_objs][1] = obj['y'] / height
-				objects[num_objs][2] = (obj['x'] + obj['w']) / width
-				objects[num_objs][3] = (obj['y'] + obj['h']) / height
+				objects[num_objs][0] = max(obj['x'] / width, 0.0)
+				objects[num_objs][1] = max(obj['y'] / height, 0.0)
+				objects[num_objs][2] = min((obj['x'] + obj['w']) / width, 1.0)
+				objects[num_objs][3] = min((obj['y'] + obj['h']) / height, 1.0)
+				# print (obj['x'], obj['y'], obj['x'] + obj['w'], obj['y'] + obj['h'], objects[num_objs])
 				for relation in obj["relations"]:
 					rel_encoded = preprocess_utils.encode([relation['name']],
 													 self.relations_vocab['relation_token_to_idx'],
@@ -158,6 +159,7 @@ class GQADataset(Dataset):
 				objects[num_objs][1] = max(obj['y'] / height, 0.0)
 				objects[num_objs][2] = min((obj['x'] + obj['w']) / width, 1.0)
 				objects[num_objs][3] = min((obj['y'] + obj['h']) / height, 1.0)
+				# print (obj['x'], obj['y'], obj['x'] + obj['w'], obj['y'] + obj['h'], objects[num_objs])
 				for relation in obj["relations"]:
 					obj_id = object_keys.index(relation['object'])
 					# can give relation id in OxO matrix if needed

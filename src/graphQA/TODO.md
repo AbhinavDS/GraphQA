@@ -4,17 +4,26 @@
 6. Functional Program learning
 7. Check if network params need to be stored
 
-12. Grounding metric
-13. Evaluation metrics - Grounding metric
+
 14. Gofai (W)
-15. model run with scenegraph (AD)
 16. Check if no question id is being entailed from outside a data split (AG)
-18. Run on 5p data
-19. Add sample config to git
 20. Normalize before concatenating things
+23. image_whole_feats (done)
+
+
+## AD
+25. Test Set consistent: fixed larger dataset
+26. Consistency: Entailed over same image or different images
+13. Evaluation metrics - Grounding metric
+
+## AG
 21. Run without gcn
 22. think about meta_data file structure
-23. image_whole_feats
 24. single script file with chmod
+27. ROI check, put max min
+
+## Scenegraph gen
+28. Find other model
+
 
 ## PERMISSION DENIED SOLVE IT (IMMM)
