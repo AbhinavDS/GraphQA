@@ -141,4 +141,4 @@ if __name__ == "__main__":
 		os.makedirs(args.out_data_dir)
 	
 	filter_qa('train', args)
-	filter_qa('val', args)
+	#filter_qa('val', args)
