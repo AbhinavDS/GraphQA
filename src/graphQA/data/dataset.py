@@ -28,8 +28,11 @@ class GQADataset(Dataset):
 		with open(valid_img_ids_path, 'r') as vf:
 			self.valid_img_ids = json.load(vf)
 
-		self.questions_keys = list([qk for qk in self.questions.keys() if self.questions[qk]['imageId'] in self.valid_img_ids])
-				
+		if args.mode != 'eval':
+			self.questions_keys = list([qk for qk in self.questions.keys() if self.questions[qk]['imageId'] in self.valid_img_ids])
+		else:
+			self.questions_keys = list(self.questions.keys())			
+		
 		with open(scene_graph_json_path, 'r') as sgf:
 			self.scene_graphs = json.load(sgf)
 		
@@ -52,6 +55,7 @@ class GQADataset(Dataset):
 			self.load_embeddings()
 
 		print("Data Read successful", len(self.questions_keys))
+		#raise('Check Error')
 
 	def get_data_config(self):
 
@@ -131,6 +135,10 @@ class GQADataset(Dataset):
 			objects = np.zeros((self.meta_data['max_num_objs'], 4))
 			object_keys = list(sg['objects'].keys())
 			for num_objs, obj_key in enumerate(object_keys):
+
+				if num_objs >= self.meta_data['max_num_objs']:
+					break
+
 				obj = sg['objects'][obj_key]
 				objects[num_objs][0] = max(obj['x'] / width, 0.0)
 				objects[num_objs][1] = max(obj['y'] / height, 0.0)
@@ -144,9 +152,7 @@ class GQADataset(Dataset):
 					assert len(rel_encoded) == 1
 					obj_id = object_keys.index(relation['object'])
 					A_id = rel_encoded[0] * self.meta_data['max_num_objs'] + obj_id
-					A[num_objs][A_id] = 1# can give relation id in OxO matrix if needed
-				if num_objs > self.meta_data['max_num_objs']:
-					break
+					A[num_objs][A_id] = 1 # can give relation id in OxO matrix if needed
 		else:
 			# Get object dims for roi pooling and Create adjacency matrix with relations (FOR_SIMPLE_GCN)
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs']))
@@ -154,6 +160,10 @@ class GQADataset(Dataset):
 			
 			object_keys = list(sg['objects'].keys())
 			for num_objs, obj_key in enumerate(object_keys):
+
+				if num_objs >= self.meta_data['max_num_objs']:
+					break
+
 				obj = sg['objects'][obj_key]
 				objects[num_objs][0] = max(obj['x'] / width, 0.0)
 				objects[num_objs][1] = max(obj['y'] / height, 0.0)
@@ -162,14 +172,15 @@ class GQADataset(Dataset):
 				# print (obj['x'], obj['y'], obj['x'] + obj['w'], obj['y'] + obj['h'], objects[num_objs])
 				for relation in obj["relations"]:
 					obj_id = object_keys.index(relation['object'])
-					# can give relation id in OxO matrix if needed
-					A[num_objs][obj_id] = 1
 
-				if num_objs > self.meta_data['max_num_objs']:
-					break
+					if obj_id >= self.meta_data['max_num_objs']:
+						continue
+
+					# can give relation id in OxO matrix if needed
+					A[num_objs][obj_id] = 1		
 
 		#Increase number of object to correct value (since indexed from 0)
-		num_objs += 1
+		#num_objs += 1
 		# Get image feature from image
 		h5_idx = self.image_info[image_idx]['index']
 		image_feat = torch.as_tensor(image_features_h5[h5_idx], dtype = torch.float)

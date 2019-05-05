@@ -24,10 +24,18 @@ class Config(object):
 		self.dataset = 'balanced'
 		self.qa_data_path = {}
 		self.sg_data_path = {}
-		for mode in ['train', 'val', 'test']:
+		for mode in ['train', 'val']:
 			self.qa_data_path[mode] = os.path.join(self.expt_data_dir, '{dataset}_{mode}_data.json'.format(dataset=self.dataset, mode=mode))
 			self.sg_data_path[mode] = os.path.join(self.expt_data_dir, self.gen_mode, '{mode}_sceneGraphs.json'.format(mode=mode))
 		
+		# Extract the test set dir path
+		test_set_dir = ('/').join(self.expt_data_dir.split('/')[:-2] + ['test_set'])
+		print('Test Set dir: ' + test_set_dir)
+
+		# Add the paths for test set
+		self.qa_data_path['test'] = os.path.join(test_set_dir, '{dataset}_{mode}_data.json'.format(dataset=self.dataset, mode='test'))
+		self.sg_data_path['test'] = os.path.join(test_set_dir, self.gen_mode, '{mode}_sceneGraphs.json'.format(mode='test'))
+
 		self.img_feat_data_path = os.path.join(self.feats_data_dir, 'gqa_spatial.h5')
 		self.img_info_path = os.path.join(self.feats_data_dir, 'gqa_spatial_merged_info.json')
 		self.rel_vocab_path = os.path.join(self.expt_data_dir, self.gen_mode, 'sg_vocab.json')

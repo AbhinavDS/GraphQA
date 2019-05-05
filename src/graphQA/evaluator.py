@@ -61,6 +61,9 @@ class Evaluator:
 			if self.get_preds:
 				preds_list += self.extract_preds(ans_distrib.detach().cpu().numpy(), ques_ids.cpu().numpy())
 
+			acc = np.mean(accuracies)
+			print("After Batch: {}, Evaluation Accuracy: {}".format(i+1, acc))
+
 		acc = np.mean(accuracies)
 		print("Evaluation Accuracy: {}".format(acc))
 		self.write_stats(acc, preds_list)
