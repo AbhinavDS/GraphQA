@@ -7,6 +7,7 @@ from torch import nn as nn
 
 from ..modules.gcn import GCN
 from ..modules.gcn_relation import GCN as GCNRelation
+from ..modules.gcn_rel_words import GCN as GCNRelWords
 from ..modules.non_linearity import NonLinearity
 from ..modules.attention import TopDownAttention
 
@@ -16,14 +17,17 @@ import utils.utils as utils
 
 class BottomUpGCN(nn.Module):
 
-	def __init__(self, args, word2vec=None, rel_word2vec=None):
+	def __init__(self, args, word2vec=None, rel_word2vec=None, obj_name_word2vec=None):
 
 		super(BottomUpGCN, self).__init__()
 		
 		if args.use_rel_emb:
 			self.gcn = GCNRelation(args, rel_word2vec=rel_word2vec)
+		elif args.use_rel_words:
+			self.gcn = GCNRelWords(args, rel_word2vec=rel_word2vec, obj_name_word2vec=obj_name_word2vec)
 		else:
 			self.gcn = GCN(args)
+
 		self.ques_encoder = QuesEncoder(args.ques_vocab_sz, args.max_ques_len, args.ques_word_vec_dim, args.n_ques_emb, args.n_ques_layers, input_dropout_p=args.drop_prob, dropout_p=args.drop_prob, bidirectional=args.bidirectional, variable_lengths=args.variable_lengths, word2vec=word2vec)
 		self.dropout_layer = nn.Dropout(p=args.drop_prob)
 		self.attn_layer = TopDownAttention(args)
@@ -35,7 +39,6 @@ class BottomUpGCN(nn.Module):
 		if args.bidirectional:
 			self.ques_proj = nn.Linear(2*args.n_ques_emb, args.n_ques_emb)
 
-		self.no_gcn = args.no_gcn
 		self.use_img_feats = args.use_img_feats
 		self.max_ques_len = args.max_ques_len
 		self.max_rels = args.max_rels
@@ -62,10 +65,7 @@ class BottomUpGCN(nn.Module):
 		obj_feats = roi_pooling_2d(img_feats, rois, self.roi_output_size)#.detach()
 		obj_feats = self.avg_layer(obj_feats).view(objs.size(0), objs.size(1), -1)
 		
-		if self.no_gcn:
-			gcn_obj_feats = obj_feats
-		else:
-			gcn_obj_feats = self.gcn(obj_feats, adj_mat)
+		gcn_obj_feats = self.gcn(obj_feats, adj_mat)
 
 		# Obtain Question Embedding
 		ques_output, (ques_hidden, _) = self.ques_encoder(ques, ques_lens)
