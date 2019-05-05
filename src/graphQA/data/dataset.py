@@ -2,6 +2,7 @@ import numpy as np
 import json
 import h5py
 import torch
+import os
 from torch.utils.data import Dataset
 
 import utils.preprocess as preprocess_utils
@@ -55,6 +56,7 @@ class GQADataset(Dataset):
 				self.rel_embeddings_mat = self.load_embeddings(self.sg_vocab['relation_token_to_idx'], self.rel_emb_dim, self.rel_word2vec_path)
 			elif self.args.use_rel_words:
 				self.rel_word2vec_path = args.rel_word2vec_path
+				self.obj_name_word2vec_path = args.obj_name_word2vec_path
 				self.rel_emb_dim = args.rel_emb_dim
 				self.obj_emb_dim = args.obj_emb_dim
 				self.rel_embeddings_mat = self.load_embeddings(self.sg_vocab['relation_token_to_idx'], self.rel_emb_dim, self.rel_word2vec_path)
@@ -72,6 +74,7 @@ class GQADataset(Dataset):
 
 		config = {}
 		config['max_num_objs'] = self.meta_data['max_num_objs']
+		config['max_objs'] = len(self.sg_vocab['object_token_to_idx'])
 		config['max_ques_len'] = self.meta_data['max_ques_len']
 		config['max_rels'] = len(self.sg_vocab['relation_token_to_idx'])
 		config['variable_lengths'] = True
@@ -153,6 +156,10 @@ class GQADataset(Dataset):
 												 allow_unk=True)
 				assert len(rel_encoded) == 1
 				obj_id = object_keys.index(relation['object'])
+
+				if obj_id >= self.meta_data['max_num_objs']:
+					continue
+
 				A_id = rel_encoded[0] * self.meta_data['max_num_objs'] + obj_id
 				
 				if self.args.use_rel_emb:
