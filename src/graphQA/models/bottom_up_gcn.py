@@ -4,6 +4,8 @@ Module that builds the Bottom Up Attention Model using Graph Convolutional Netwo
 
 import torch 
 from torch import nn as nn
+from torch.nn.utils.weight_norm import weight_norm as wn
+
 
 from ..modules.gcn import GCN
 from ..modules.gcn_relation import GCN as GCNRelation
@@ -35,9 +37,9 @@ class BottomUpGCN(nn.Module):
 		self.ques_gate = NonLinearity(args.n_ques_emb, args.n_qi_gate, args.nl, args.drop_prob)
 		self.img_gate = NonLinearity(args.n_img_feats, args.n_qi_gate, args.nl,args.drop_prob)
 		self.ans_gate = NonLinearity(args.n_qi_gate, args.n_ans_gate, args.nl, args.drop_prob)
-		self.ans_linear = nn.Linear(args.n_ans_gate, args.n_ans)
+		self.ans_linear = wn(nn.Linear(args.n_ans_gate, args.n_ans))
 		if args.bidirectional:
-			self.ques_proj = nn.Linear(2*args.n_ques_emb, args.n_ques_emb)
+			self.ques_proj = wn(nn.Linear(2*args.n_ques_emb, args.n_ques_emb))
 
 		self.use_img_feats = args.use_img_feats
 		self.max_ques_len = args.max_ques_len

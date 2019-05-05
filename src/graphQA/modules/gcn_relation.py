@@ -1,7 +1,8 @@
 import numpy as np
 import torch.nn as nn
 import torch
-from torch.autograd import Variable
+from torch.nn.utils.weight_norm import weight_norm as wn
+
 
 class GCN(nn.Module):
 	def __init__(self, args, rel_word2vec=None):
@@ -13,9 +14,11 @@ class GCN(nn.Module):
 		self.gcn_depth = args.gcn_depth
 		self.weights_init = args.weights_init
 		self.layers = nn.ModuleList()
+
+		assert (self.gcn_depth >= 0)
 		for i in range(self.gcn_depth):
-			self.add_layer(nn.Linear(self.n_img_feats,self.n_img_feats))
-			self.add_layer(nn.Linear(self.n_img_feats + self.rel_emb_dim, self.n_img_feats))
+			self.add_layer(wn(nn.Linear(self.n_img_feats,self.n_img_feats)))
+			self.add_layer(wn(nn.Linear(self.n_img_feats + self.rel_emb_dim, self.n_img_feats)))
 		self.a = nn.Tanh()
 		if rel_word2vec is not None:
 			print('Using Pre-trained Word2vec for Relation')

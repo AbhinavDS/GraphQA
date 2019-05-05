@@ -7,6 +7,7 @@ http://openaccess.thecvf.com/content_cvpr_2018/papers/Teney_Tips_and_Tricks_CVPR
 
 import torch
 import torch.nn as nn
+from torch.nn.utils.weight_norm import weight_norm as wn
 from .non_linearity import NonLinearity
 
 class TopDownAttention(nn.Module):
@@ -16,7 +17,7 @@ class TopDownAttention(nn.Module):
 		super(TopDownAttention, self).__init__()
 
 		# Doubt on what to set
-		self.attn_layer = nn.Linear(args.n_attn, 1)
+		self.attn_layer = wn(nn.Linear(args.n_attn, 1))
 		self.attn_softmax = nn.Softmax(dim=1)
 		self.device = args.device
 		self.max_num_objs = args.max_num_objs
@@ -37,7 +38,6 @@ class TopDownAttention(nn.Module):
 		@param num_obj: Tensor for number of objects in each image for creating a mask. Size: (B)
 		@return: A single image feature attended over all objects. Size: (B*F1)
 		"""
-
 		batch_sz = ques_emb.size(0)
 		
 		obj_mask = torch.zeros(batch_sz, self.max_num_objs).type(torch.ByteTensor).to(self.device)

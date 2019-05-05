@@ -39,7 +39,8 @@ class Trainer:
 		self.device = self.args.device
 
 		# Can be changed to support different optimizers
-		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args.lr)
+		# self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args.lr)
+		self.optimizer = torch.optim.Adamax(self.model.parameters())
 		self.set_criterion()
 		self.lr = self.args.lr
 		
@@ -91,6 +92,9 @@ class Trainer:
 				
 				batch_loss = self.criterion(ans_distrib, ans_output)
 				batch_loss.backward()
+
+				nn.utils.clip_grad_norm_(self.model.parameters(), 0.25)
+				
 				self.optimizer.step()
 				loss += batch_loss.data
 				train_accuracies.extend(self.get_accuracy(ans_distrib, ans_output))

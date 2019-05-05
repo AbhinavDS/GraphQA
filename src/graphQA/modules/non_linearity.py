@@ -4,6 +4,7 @@ Module that implements the gated tanh function that is repeatedly used in the at
 
 import torch 
 from torch import nn
+from torch.nn.utils.weight_norm import weight_norm as wn
 
 class NonLinearity(nn.Module):
 
@@ -15,11 +16,14 @@ class NonLinearity(nn.Module):
 		if self.nl == 'gated_tanh':
 			self.tanh = nn.Tanh()
 			self.sigmoid = nn.Sigmoid()
-			self.t_layer = nn.Linear(n_inp, n_out)
-			self.g_layer = nn.Linear(n_inp, n_out)
+			self.t_layer = wn(nn.Linear(n_inp, n_out))
+			self.g_layer = wn(nn.Linear(n_inp, n_out))
 		elif self.nl == 'relu':
-			self.relu = nn.ReLU()
-			self.layer = nn.Linear(n_inp, n_out)
+			self.nl_layer = nn.ReLU()
+			self.layer = wn(nn.Linear(n_inp, n_out))
+		elif self.nl == 'tanh':
+			self.nl_layer = nn.Tanh()
+			self.layer = wn(nn.Linear(n_inp, n_out))
 		else:
 			raise('Invalid Non Linearity Specified')
 
@@ -28,8 +32,8 @@ class NonLinearity(nn.Module):
 			y = self.tanh(self.dropout(self.t_layer(inp)))
 			g = self.sigmoid(self.dropout(self.g_layer(inp)))
 			return torch.mul(y, g)
-		elif self.nl == 'relu':
-			return self.relu(self.dropout(self.layer(inp)))
+		else:
+			return self.nl_layer(self.dropout(self.layer(inp)))
 		
 
 
