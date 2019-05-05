@@ -30,8 +30,7 @@ class Config(object):
 		
 		# Extract the test set dir path
 		test_set_dir = ('/').join(self.expt_data_dir.split('/')[:-2] + ['test_set'])
-		print('Test Set dir: ' + test_set_dir)
-
+		
 		# Add the paths for test set
 		self.qa_data_path['test'] = os.path.join(test_set_dir, '{dataset}_{mode}_data.json'.format(dataset=self.dataset, mode='test'))
 		self.sg_data_path['test'] = os.path.join(test_set_dir, self.gen_mode, '{mode}_sceneGraphs.json'.format(mode='test'))
