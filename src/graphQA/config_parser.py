@@ -96,7 +96,7 @@ def parse_args():
 	parser.add_argument('--nl', default='relu', choices=['relu', 'gated_tanh'], help="Type of Non linearity to be used in the network (relu, gated_tanh)")
 
 	# Options for Question Encoder
-	parser.add_argument('--n_ques_emb', type=int, default=256, help="The dimension of the hidden layer in Question Model")
+	parser.add_argument('--n_ques_emb', type=int, default=256*4, help="The dimension of the hidden layer in Question Model")  #1024
 	parser.add_argument('--ques_word_vec_dim', type=int, default=300, help="The dimension of each word in the Question Encoder")
 	parser.add_argument('--n_ques_layers', type=int, default=2, help="The number of layers of RNN in Question Model")
 	parser.add_argument('--bidirectional', action="store_true", default=False, help="Flag to indicate if the RNN runs in both directions in Question Model")
@@ -108,13 +108,11 @@ def parse_args():
 	parser.add_argument('--gcn_depth', default=5, type=int, help="The depth of the GCN network")
 	parser.add_argument('--rel_emb_dim', default=100, type=int, help="The dimensionality of the relation embedding")
 	parser.add_argument('--use_rel_emb', action="store_true", default=False, help="Use Relation Embedding")
-	parser.add_argument('--no_gcn', action="store_true", default=False, help="Don't use GCN")
-
 
 	# Options for Answering Model
-	parser.add_argument('--n_qi_gate', type=int, default=128, help="The dimension of the Question-Image Gate in Answerer Model")
-	parser.add_argument('--n_ans_gate', type=int, default=128, help="The dimension of the Answer Gate")
-	parser.add_argument('--n_attn', type=int, default=512, help="The dimension of the output feature dimension for each object for computing attention weights")
+	parser.add_argument('--n_qi_gate', type=int, default=128*2, help="The dimension of the Question-Image Gate in Answerer Model") #1024
+	parser.add_argument('--n_ans_gate', type=int, default=128*2, help="The dimension of the Answer Gate") #1024
+	parser.add_argument('--n_attn', type=int, default=512*2, help="The dimension of the output feature dimension for each object for computing attention weights") #1024
 
 	# Options for Attention Model
 	parser.add_argument('--use_img_feats', action="store_true", default=False, help="Use Average Image Features in Attention Model")
