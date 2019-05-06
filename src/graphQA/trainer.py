@@ -109,7 +109,9 @@ class Trainer:
 				adj_mat = batch['A'].to(self.device)[sorted_indices]
 				num_obj = batch['num_objs'].to(self.device)[sorted_indices] 
 				ans_output = batch['ans'].to(self.device)[sorted_indices]
-				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
+				obj_wrds = batch['obj_wrds'].to(self.device)[sorted_indices]
+
+				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
 				
 				#print(ans_distrib.size(), ans_output.size())
 				if self.args.criterion == "bce" and self.args.use_bua or self.args.use_bua2:

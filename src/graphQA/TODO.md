@@ -15,6 +15,7 @@
 29. bottom up from source
 30. gcn word
 31. attention mac
+32. debug mac
 
 
 ## PERMISSION DENIED SOLVE IT (IMMM)

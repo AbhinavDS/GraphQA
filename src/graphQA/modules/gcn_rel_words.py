@@ -14,7 +14,7 @@ class GCN(nn.Module):
 		self.obj_emb_dim = args.obj_emb_dim
 		self.max_rels = args.max_rels
 		self.max_num_objs = args.max_num_objs
-		self.max_objs = args.max_objs
+		self.max_objs = args.max_obj_names
 		self.rel_emb_dim = args.rel_emb_dim
 		self.gcn_depth = args.gcn_depth
 		self.weights_init = args.weights_init
@@ -54,18 +54,15 @@ class GCN(nn.Module):
 			else:
 				nn.init.constant_(self.layers[-1].weight,0)
 
-	def forward(self, obj_feats, obj_rels):
+	def forward(self, obj_img_feats, obj_wrds, obj_rels):
 		
 		#obj_rels: batch_size X O X O (Adjacency matrix with relation ids instead of 1s and 0s)
 		# Implemented as ResNet
 		# Graph convolution: feature at object p = weighted feature at object p + sum of weighted features from the neighbours
 		# Use relational embedding when calculating features from neighbours, instead of just x
 
-		batch_size, objects, _ = obj_feats.size()
-
-		x = torch.LongTensor(list(obj_id for obj_id in range(self.max_num_objs))).to(self.device)
-		x = x.repeat(batch_size).view(batch_size, self.max_num_objs)
-		x = self.obj_name_embedding(x)
+		batch_size, objects, _ = obj_img_feats.size()
+		x = self.obj_name_embedding(obj_wrds)
 
 		rel_embed = self.relation_embedding(obj_rels.long())
 		
@@ -81,5 +78,5 @@ class GCN(nn.Module):
 			bp = torch.bmm(A, xr).view(batch_size, objects, objects, -1).sum(dim=2, keepdim=False)
 			x = self.a(self.layers[i](x) + torch.div(bp, denom) + x)
 		
-		return torch.cat([x, obj_feats], 2)
+		return torch.cat([x, obj_img_feats], 2)
 
