@@ -132,5 +132,6 @@ def parse_args():
 
 	parser.add_argument('--use_bua', action="store_true", default=False, help="Use Git BottomUp")
 	parser.add_argument('--use_bua2', action="store_true", default=False, help="Use Git BottomUp2")
+	parser.add_argument('--use_mac', action="store_true", default=False, help="Use MAC based network")
 
 	return parser.parse_args(namespace = args)

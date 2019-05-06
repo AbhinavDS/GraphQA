@@ -29,6 +29,12 @@ Output = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_relw.out
 Arguments = run_2.sh --expt_name=5p_gold_g5_relw --gcn_depth=5 --use_rel_words --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
 Queue 1
 
+Log = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_256_relw.log
+Error = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_256_relw.err
+Output = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_256_relw.out
+Arguments = run_2.sh --expt_name=5p_gold_g5_relw_256 --gcn_depth=5 --use_rel_words --n_attn=256 --n_ans_gate=256 --n_qi_gate=256 --n_ques_emb=256 --bsz=32
+Queue 1
+
 # Log = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_drop0.log
 # Error = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_drop0.err
 # Output = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_drop0.out

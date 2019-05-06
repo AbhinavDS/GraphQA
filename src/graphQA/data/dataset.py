@@ -136,7 +136,7 @@ class GQADataset(Dataset):
 		else:
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs']))
 
-		if self.use_rel_words:
+		if self.args.use_rel_words:
 			obj_wrds_mat = np.zeros((self.meta_data['max_num_objs']))
 
 		num_relations = len(self.sg_vocab['relation_token_to_idx'])
@@ -153,7 +153,9 @@ class GQADataset(Dataset):
 			objects[num_objs][2] = min((obj['x'] + obj['w']) / width, 1.0)
 			objects[num_objs][3] = min((obj['y'] + obj['h']) / height, 1.0)
 
-			obj_wrds_mat[num_objs] = self.sg_vocab['object_token_to_idx'][obj['name']]
+			obj_wrds_mat[num_objs] = preprocess_utils.encode([obj['name']],
+												 self.sg_vocab['object_token_to_idx'],
+												 allow_unk=True)[0]
 
 			# print (obj['x'], obj['y'], obj['x'] + obj['w'], obj['y'] + obj['h'], objects[num_objs])
 			for relation in obj["relations"]:

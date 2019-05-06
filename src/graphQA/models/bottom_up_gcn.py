@@ -51,6 +51,7 @@ class BottomUpGCN(nn.Module):
 		self.roi_output_size = (3,3)
 		self.avg_layer = nn.AvgPool2d(self.roi_output_size)
 		self.device = args.device
+		self.use_rel_words = args.use_rel_words
 
 	def forward(self, img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds):
 

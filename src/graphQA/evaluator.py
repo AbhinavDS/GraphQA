@@ -10,8 +10,6 @@ import numpy as np
 from tensorboardX import SummaryWriter
 
 from .models.bottom_up_gcn import BottomUpGCN
-from .models.git_bua import BaseModel as BottomUp
-from .models.git_bua2 import BaseModel2 as BottomUp2
 from torch.utils.data import DataLoader
 
 class Evaluator:
@@ -21,15 +19,10 @@ class Evaluator:
 		self.args = args
 		self.num_epochs = args.num_epochs
 		self.dataset = dataset
-		if args.use_bua:
-			self.model = BottomUp(args)
-		elif args.use_bua2:
-			self.model = BottomUp2(args)
-		else:
-			self.model = BottomUpGCN(args)
+		self.model = BottomUpGCN(args)
 		self.load_ckpt()
 		self.device = self.args.device		
-		self.data_loader = DataLoader(dataset=self.dataset, batch_size=self.args.bsz, shuffle=True, num_workers=4)
+		self.data_loader = DataLoader(dataset=self.dataset, batch_size=self.args.bsz, num_workers=4)
 
 		self.get_preds = self.args.get_preds
 
@@ -60,9 +53,11 @@ class Evaluator:
 			adj_mat = batch['A'].to(self.device)[sorted_indices]
 			num_obj = batch['num_objs'].to(self.device)[sorted_indices] 
 			ans_output = batch['ans'].to(self.device)[sorted_indices]
-			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
 			ques_ids = batch['ques_id'].to(self.device)[sorted_indices]
+			obj_wrds = batch['obj_wrds'].to(self.device)[sorted_indices]
 
+			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
+			
 			accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
 
 			if self.get_preds:

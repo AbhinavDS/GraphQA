@@ -9,10 +9,8 @@ from torch import nn
 import numpy as np
 from tensorboardX import SummaryWriter
 
-from .models.bottom_up_gcn import BottomUpGCN
-from .models.git_bua import BaseModel as BottomUp
-from .models.git_bua2 import BaseModel2 as BottomUp2
 from torch.utils.data import DataLoader
+from .models.mac import MacNetwork
 
 class Trainer:
 
@@ -24,30 +22,14 @@ class Trainer:
 		self.val_dataset = val_dataset
 		self.use_glove = args.use_glove
 		self.use_rel_words = args.use_rel_words
-		if self.use_glove:
-			self.embeddings_mat = self.train_dataset.embeddings_mat
-			if self.args.use_rel_emb:
-				self.rel_embeddings_mat = self.train_dataset.rel_embeddings_mat
-				self.model = BottomUpGCN(args, word2vec=self.embeddings_mat, rel_word2vec=self.rel_embeddings_mat)
-			elif self.args.use_rel_words:
-				self.rel_embeddings_mat = self.train_dataset.rel_embeddings_mat
-				self.obj_names_embeddings_mat = self.train_dataset.obj_names_embeddings_mat
-				self.model = BottomUpGCN(args, word2vec=self.embeddings_mat, rel_word2vec=self.rel_embeddings_mat, obj_name_word2vec=self.obj_names_embeddings_mat)
-			else:
-				if args.use_bua:
-					self.model = BottomUp(args, word2vec=self.embeddings_mat)
-				elif args.use_bua2:
-					self.model = BottomUp2(args, word2vec=self.embeddings_mat)
-				else:
-					self.model = BottomUpGCN(args, word2vec=self.embeddings_mat)
-		else:
-			self.model = BottomUpGCN(args)
-
+		
 		self.device = self.args.device
 
-		# Can be changed to support different optimizers
-		# self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args.lr)
-		self.optimizer = torch.optim.Adamax(self.model.parameters())
+		self.model = MacNetwork(args)
+		self.model_running = MacNetwork(args)
+		self.accumulate(self.model_running, self.model, 0)
+
+		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args.lr)
 		self.set_criterion()
 		self.lr = self.args.lr
 		
@@ -86,7 +68,8 @@ class Trainer:
 			self.load_ckpt()
 
 		self.model.to(self.device)
-				
+		self.model_running.to(self.device)
+
 		for epoch in range(self.resume_from_epoch, self.num_epochs):
 
 			lr = self.adjust_lr(epoch)
@@ -113,17 +96,12 @@ class Trainer:
 
 				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
 				
-				#print(ans_distrib.size(), ans_output.size())
-				if self.args.criterion == "bce" and self.args.use_bua or self.args.use_bua2:
-					batch_loss = self.instance_bce_with_logits(ans_distrib, ans_output)
-				else:
-					batch_loss = self.criterion(ans_distrib, ans_output)
-
+				batch_loss = self.criterion(ans_distrib, ans_output)
 				batch_loss.backward()
 
-				nn.utils.clip_grad_norm_(self.model.parameters(), 0.25)
-				
+				#nn.utils.clip_grad_norm_(self.model.parameters(), 0.25)
 				self.optimizer.step()
+				self.accumulate(self.model_running, self.model)
 				loss += batch_loss.data
 				train_accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
 
@@ -132,17 +110,6 @@ class Trainer:
 
 			train_acc = np.mean(train_accuracies)
 			
-			# ques_lens = None
-			# sorted_indices = None
-			# ques_lens = None
-			# img_feats = None
-			# ques = None
-			# objs = None
-			# adj_mat = None
-			# num_obj = None
-			# ans_output = None
-			# ans_distrib = None
-			del ans_output
 			val_loss, val_acc = self.eval()
 
 			self.log_stats(loss, val_loss, train_acc, val_acc, epoch)
@@ -162,7 +129,7 @@ class Trainer:
 		loss = 0.0
 		accuracies = []
 
-		self.model.eval()
+		self.model_running.eval()
 		for i, batch in enumerate(self.val_loader):
 
 			# Unpack the items from the batch tensor
@@ -176,7 +143,7 @@ class Trainer:
 			num_obj = batch['num_objs'].to(self.device)[sorted_indices] 
 			ans_output = batch['ans'].to(self.device)[sorted_indices]
 			obj_wrds = batch['obj_wrds'].to(self.device)[sorted_indices]
-			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
+			ans_distrib = self.model_running(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
 
 			batch_loss = self.criterion(ans_distrib, ans_output)
 			loss += batch_loss.data
@@ -192,15 +159,7 @@ class Trainer:
 		"""
 		
 		pred_ids = np.argmax(preds.detach().cpu().numpy(), axis = -1)
-
-		if self.args.criterion == "bce":
-			# correct is in form of one hot vector
-			correct_ids = np.argmax(correct.cpu().numpy(), axis = -1)
-		elif self.args.criterion == "xce":
-			correct_ids = correct.cpu().numpy()
-		else:
-			raise("Incorrect Loss function to compute accuracy for")
-
+		correct_ids = correct.cpu().numpy()
 		acc = np.equal(pred_ids.reshape(-1), correct_ids)
 		return acc
 	
@@ -233,14 +192,17 @@ class Trainer:
 		lr_tmp = self.lr * (0.5 ** (epoch // self.args.learning_rate_decay_every))
 		return lr_tmp
 
+	def accumulate(self, model1, model2, decay=0.999):
+
+		par1 = dict(model1.named_parameters())
+		par2 = dict(model2.named_parameters())
+
+		for k in par1.keys():
+		    par1[k].data.mul_(decay).add_(1 - decay, par2[k].data)
+
 	def set_criterion(self):
 
-		if self.args.criterion == "bce":
-			self.criterion = nn.BCEWithLogitsLoss()
-		elif self.args.criterion == "xce":
-			self.criterion = nn.CrossEntropyLoss()
-		else:
-			raise("Invalid loss criterion")
+		self.criterion = nn.CrossEntropyLoss()
 
 	def log_stats(self, train_loss, val_loss, train_acc, val_acc, epoch):
 		
@@ -266,6 +228,7 @@ class Trainer:
 
 		ckpt = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
 		self.model.load_state_dict(ckpt['state_dict'])
+		self.accumulate(self.model_running, self.model, 0)
 
 	def save_ckpt(self, save_best=False):
 
@@ -273,12 +236,12 @@ class Trainer:
 		Saves the model checkpoint at the correct directory path
 		"""
 
-		model_name = self.model.__class__.__name__
+		model_name = self.model_running.__class__.__name__
 		ckpt_path = os.path.join(self.args.ckpt_dir, '{}.ckpt'.format(model_name))
 
 		# Maybe add more information to the checkpoint
 		model_dict = {
-			'state_dict': self.model.state_dict(),
+			'state_dict': self.model_running.state_dict(),
 			'args': self.args
 		}
 
@@ -287,4 +250,3 @@ class Trainer:
 		if save_best:
 			best_ckpt_path = os.path.join(self.args.ckpt_dir, '{}_best.ckpt'.format(model_name))
 			torch.save(model_dict, best_ckpt_path)
-

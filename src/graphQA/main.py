@@ -4,7 +4,9 @@ Main module that controls the complete graph QA pipeline
 
 from .config_parser import parse_args
 from .trainer import Trainer
+from .mac_trainer import Trainer as MacTrainer
 from.evaluator import Evaluator
+from .mac_evaluator import Evaluator as MacEvaluator
 from .data.dataset import GQADataset
 
 if __name__ == "__main__":
@@ -19,15 +21,22 @@ if __name__ == "__main__":
 		args.set_config(train_dataset.get_data_config())
 		print(args)
 
-		trainer = Trainer(args, train_dataset, val_dataset)
+		if args.use_mac:
+			trainer = MacTrainer(args, train_dataset, val_dataset)
+		else:
+			trainer = Trainer(args, train_dataset, val_dataset)
+		
 		trainer.train()
 	
 	elif args.mode == "eval":
 		val_dataset = GQADataset(args, qa_data_key='test', sg_data_key='test')
 		args.set_config(val_dataset.get_data_config())
 		
-		#Invoke the Evaluator Module here
-		evaluator = Evaluator(args, val_dataset)
+		if args.use_mac:
+			evaluator = MacEvaluator(args, val_dataset)
+		else:
+			evaluator = Evaluator(args, val_dataset)
+		
 		evaluator.eval()
 	
 	else:
