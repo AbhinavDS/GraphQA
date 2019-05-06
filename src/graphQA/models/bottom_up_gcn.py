@@ -52,7 +52,7 @@ class BottomUpGCN(nn.Module):
 		self.avg_layer = nn.AvgPool2d(self.roi_output_size)
 		self.device = args.device
 
-	def forward(self, img_feats, ques, objs, adj_mat, ques_lens, num_obj):
+	def forward(self, img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds):
 
 		"""
 		@param img_feats: The image features for the corresponding image of each sample. (batch_size, n_channels, width, height)
@@ -69,7 +69,10 @@ class BottomUpGCN(nn.Module):
 		obj_feats = roi_pooling_2d(img_feats, rois, self.roi_output_size)#.detach()
 		obj_feats = self.avg_layer(obj_feats).view(objs.size(0), objs.size(1), -1)
 		
-		gcn_obj_feats = self.gcn(obj_feats, adj_mat)
+		if self.use_rel_words:
+			gcn_obj_feats = self.gcn(obj_feats, obj_wrds, adj_mat)	
+		else:
+			gcn_obj_feats = self.gcn(obj_feats, adj_mat)
 
 		# Obtain Question Embedding
 		ques_output, (ques_hidden, _) = self.ques_encoder(ques, ques_lens)

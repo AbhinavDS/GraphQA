@@ -74,7 +74,7 @@ class GQADataset(Dataset):
 
 		config = {}
 		config['max_num_objs'] = self.meta_data['max_num_objs']
-		config['max_objs'] = len(self.sg_vocab['object_token_to_idx'])
+		config['max_obj_names'] = len(self.sg_vocab['object_token_to_idx'])
 		config['max_ques_len'] = self.meta_data['max_ques_len']
 		config['max_rels'] = len(self.sg_vocab['relation_token_to_idx'])
 		config['variable_lengths'] = True
@@ -136,8 +136,11 @@ class GQADataset(Dataset):
 		else:
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs']))
 
+		if self.use_rel_words:
+			obj_wrds_mat = np.zeros((self.meta_data['max_num_objs']))
+
 		num_relations = len(self.sg_vocab['relation_token_to_idx'])
-		objects = np.zeros((self.meta_data['max_num_objs'], 4))
+		objects = np.zeros((self.meta_data['max_num_objs'], 4), dtype=np.float32) - 1
 		object_keys = list(sg['objects'].keys())
 		for num_objs, obj_key in enumerate(object_keys):
 
@@ -149,6 +152,9 @@ class GQADataset(Dataset):
 			objects[num_objs][1] = max(obj['y'] / height, 0.0)
 			objects[num_objs][2] = min((obj['x'] + obj['w']) / width, 1.0)
 			objects[num_objs][3] = min((obj['y'] + obj['h']) / height, 1.0)
+
+			obj_wrds_mat[num_objs] = self.sg_vocab['object_token_to_idx'][obj['name']]
+
 			# print (obj['x'], obj['y'], obj['x'] + obj['w'], obj['y'] + obj['h'], objects[num_objs])
 			for relation in obj["relations"]:
 				rel_encoded = preprocess_utils.encode([relation['name']],
@@ -195,5 +201,6 @@ class GQADataset(Dataset):
 				'num_objs': num_objs,
 				'A': torch.as_tensor(A, dtype=torch.float),
 				'image_feat': torch.as_tensor(image_feat, dtype=torch.float),
-				'ques_id': idx
+				'ques_id': idx,
+				'obj_wrds': torch.as_tensor(obj_wrds_mat, dtype=torch.long)
 			}

@@ -4,21 +4,18 @@
 7. Check if network params need to be stored
 
 14. Gofai (W)
-16. Check if no question id is being entailed from outside a data split (AG)
-20. Normalize before concatenating things
-23. image_whole_feats (done)
-
-## AD
-25. Test Set consistent: fixed larger dataset
 13. Evaluation metrics - Grounding metric
 
-## AG
 22. think about meta_data file structure
-24. single script file with chmod
 27. ROI check, put max min
 
 ## Scenegraph gen
 28. Find other model
+
+29. bottom up from source
+30. gcn word
+31. attention mac
+32. debug mac
 
 
 ## PERMISSION DENIED SOLVE IT (IMMM)

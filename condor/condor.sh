@@ -11,10 +11,16 @@ Notification = complete
 Notify_user = abhinav@cs.utexas.edu
 Initialdir = /u/abhinav/Projects/GraphQA/condor/
 
-Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_nogcn.log
-Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_nogcn.err
-Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_nogcn.out
-Arguments = run.sh --expt_name=5p_gold_nogcn --no_gcn --bsz=256
+# Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_2bua2_512.log
+# Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_2bua2_512.err
+# Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_2bua2_512.out
+# Arguments = run.sh --expt_name=5p_gold_2bua2_512_bce --use_bua2 --gcn_depth=0 --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=128
+# Queue 1
+
+Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_2bua2_512_bce.log
+Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_2bua2_512_bce.err
+Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_2bua2_512_bce.out
+Arguments = run.sh --expt_name=5p_gold_2bua2_512_bce --use_bua2 --gcn_depth=0 --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=128 --criterion=bce
 Queue 1
 
 # Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g4.log
