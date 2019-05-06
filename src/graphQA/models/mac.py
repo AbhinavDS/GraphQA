@@ -16,7 +16,7 @@ def linear(in_dim, out_dim, bias=True):
 class MACNetwork(nn.Module):
 	def __init__(self, n_vocab, dim, embed_hidden=300,
 				max_step=12, self_attention=False, memory_gate=False,
-				classes=28, dropout=0.15):
+				classes=28, dropout=0.15, word2vec=None):
 		super().__init__()
 
 		self.conv = nn.Sequential(nn.Conv2d(2048, dim, 3, padding=1),
@@ -24,7 +24,15 @@ class MACNetwork(nn.Module):
 								nn.Conv2d(dim, dim, 3, padding=1),
 								nn.ELU())
 
-		self.embed = nn.Embedding(n_vocab, embed_hidden)
+		if word2vec is not None:
+			print('Using Pre-trained Word2vec')
+			assert word2vec.size(0) == n_vocab
+			assert word2vec.size(1) == embed_hidden
+            self.embed = nn.Embedding(n_vocab, embed_hidden)
+            self.embed.weight = nn.Parameter(word2vec)
+        else:
+			self.embed = nn.Embedding(n_vocab, embed_hidden)
+		
 		self.lstm = nn.LSTM(embed_hidden, dim,
 						batch_first=True, bidirectional=True)
 		self.lstm_proj = nn.Linear(dim * 2, dim)
