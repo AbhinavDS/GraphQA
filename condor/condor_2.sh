@@ -14,20 +14,20 @@ Initialdir = /scratch/cluster/ankgarg/gqa/GraphQA/condor/
 Log = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g3_relw.log
 Error = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g3_relw.err
 Output = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g3_relw.out
-Arguments = run_2.sh --expt_name=5p_gold_g3_relw --gcn_depth=3 --use_rel_words --gcn_depth=3 --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
+Arguments = run_2.sh --expt_name=5p_gold_g3_relw --gcn_depth=3 --use_rel_words --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
 Queue 1
 
-# Log = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_bce_tanh.log
-# Error = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_bce_tanh.err
-# Output = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_bce_tanh.out
-# Arguments = run_2.sh --expt_name=5p_gold_g5_bce_tanh --gcn_depth=5  --criterion=bce --nl=gated_tanh --bsz=128 --drop_prob=0.3
-# Queue 1
+Log = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g4_relw.log
+Error = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g4_relw.err
+Output = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g4_relw.out
+Arguments = run_2.sh --expt_name=5p_gold_g4_relw --gcn_depth=4 --use_rel_words --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
+Queue 1
 
-# Log = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_img.log
-# Error = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_img.err
-# Output = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_img.out
-# Arguments = run_2.sh --expt_name=5p_gold_g5_img --gcn_depth=5  --use_img_feats --bsz=128 --drop_prob=0.3
-# Queue 1
+Log = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_relw.log
+Error = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_relw.err
+Output = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_relw.out
+Arguments = run_2.sh --expt_name=5p_gold_g5_relw --gcn_depth=5 --use_rel_words --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
+Queue 1
 
 # Log = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_drop0.log
 # Error = /scratch/cluster/ankgarg/gqa/logs/5p_gold_g5_drop0.err
