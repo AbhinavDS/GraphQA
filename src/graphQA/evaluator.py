@@ -29,7 +29,7 @@ class Evaluator:
 			self.model = BottomUpGCN(args)
 		self.load_ckpt()
 		self.device = self.args.device		
-		self.data_loader = DataLoader(dataset=self.dataset, batch_size=self.args.bsz, shuffle=True, num_workers=1)
+		self.data_loader = DataLoader(dataset=self.dataset, batch_size=self.args.bsz, shuffle=True, num_workers=4)
 
 		self.get_preds = self.args.get_preds
 

@@ -9,6 +9,7 @@ import argparse, json, string
 from collections import Counter
 import math
 
+import os
 from math import floor
 import h5py as h5
 import numpy as np
@@ -619,26 +620,28 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--imdb', default="/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/imdb_1024.h5", type=str)
-    parser.add_argument('--object_input', default="/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/obj_data.json", type=str)
-    parser.add_argument('--relationship_input', default="/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/rel_data.json", type=str)
-    parser.add_argument('--metadata_input', default="/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/img_metadata.json", type=str)
-    parser.add_argument('--object_list', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/obj_list.txt', type=str)
-    parser.add_argument('--pred_list', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/pred_list.txt', type=str)
+    parser.add_argument('--base_dir', required=True, type=str, help="Base directory which contains all the files required to be read")
     parser.add_argument('--object_alias', default='/scratch/cluster/ankgarg/gqa/dataset/alias/object_alias.txt', type=str)
     parser.add_argument('--pred_alias', default='/scratch/cluster/ankgarg/gqa/dataset/alias/predicate_alias.txt', type=str)
     parser.add_argument('--num_objects', default=0, type=int, help="set to 0 to disable filtering")
     parser.add_argument('--num_predicates', default=0, type=int, help="set to 0 to disable filtering")
-    parser.add_argument('--min_box_area_frac', default=0.0, type=float)
-    parser.add_argument('--json_file', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/VG-dicts.json')
-    parser.add_argument('--h5_file', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/VG.h5')
-    parser.add_argument('--valid_img_file', default='/scratch/cluster/ankgarg/gqa/test_data/1p/vg_data/valid_img_ids.json')
+    parser.add_argument('--min_box_area_frac', default=0.002, type=float)
     parser.add_argument('--load_frac', default=1, type=float)
     parser.add_argument('--use_input_split', default=True, type=bool)
     parser.add_argument('--train_frac', default=0.7, type=float)
     parser.add_argument('--val_frac', default=0.7, type=float)
     parser.add_argument('--shuffle', default=False, type=bool)
 
-
     args = parser.parse_args()
+    
+    args.imdb = os.path.join(args.base_dir, 'imdb_1024.h5')
+    args.object_input = os.path.join(args.base_dir, 'obj_data.json')
+    args.relationship_input = os.path.join(args.base_dir, 'rel_data.json')
+    args.metadata_input = os.path.join(args.base_dir, 'img_metadata.json')
+    args.object_list = os.path.join(args.base_dir, 'obj_list.txt')
+    args.pred_list = os.path.join(args.base_dir, 'pred_list.txt')
+    args.json_file = os.path.join(args.base_dir, 'VG-dicts.json')
+    args.h5_file = os.path.join(args.base_dir, 'VG.h5')
+    args.valid_img_file = os.path.join(args.base_dir, 'valid_img_ids.json')
+    
     main(args)

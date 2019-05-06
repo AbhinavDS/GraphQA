@@ -9,6 +9,7 @@ from torch.nn.utils.weight_norm import weight_norm as wn
 
 from ..modules.gcn import GCN
 from ..modules.gcn_relation import GCN as GCNRelation
+from ..modules.gcn_rel_words import GCN as GCNRelWords
 from ..modules.non_linearity import NonLinearity
 from ..modules.attention import TopDownAttention
 
@@ -18,20 +19,25 @@ import utils.utils as utils
 
 class BottomUpGCN(nn.Module):
 
-	def __init__(self, args, word2vec=None, rel_word2vec=None):
+	def __init__(self, args, word2vec=None, rel_word2vec=None, obj_name_word2vec=None):
 
 		super(BottomUpGCN, self).__init__()
 		
+		self.img_gate = NonLinearity(args.n_img_feats, args.n_qi_gate, args.nl,args.drop_prob)
 		if args.use_rel_emb:
 			self.gcn = GCNRelation(args, rel_word2vec=rel_word2vec)
+		elif args.use_rel_words:
+			self.gcn = GCNRelWords(args, rel_word2vec=rel_word2vec, obj_name_word2vec=obj_name_word2vec)
+			self.img_gate = NonLinearity(args.n_img_feats + args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
 		else:
 			self.gcn = GCN(args)
+
 		self.ques_encoder = QuesEncoder(args.ques_vocab_sz, args.max_ques_len, args.ques_word_vec_dim, args.n_ques_emb, args.n_ques_layers, input_dropout_p=args.drop_prob, dropout_p=args.drop_prob, bidirectional=args.bidirectional, variable_lengths=args.variable_lengths, word2vec=word2vec)
 		self.dropout_layer = nn.Dropout(p=args.drop_prob)
 		self.attn_layer = TopDownAttention(args)
 		self.nl = args.nl
 		self.ques_gate = NonLinearity(args.n_ques_emb, args.n_qi_gate, args.nl, args.drop_prob)
-		self.img_gate = NonLinearity(args.n_img_feats, args.n_qi_gate, args.nl,args.drop_prob)
+		
 		self.ans_gate = NonLinearity(args.n_qi_gate, args.n_ans_gate, args.nl, args.drop_prob)
 		self.ans_linear = wn(nn.Linear(args.n_ans_gate, args.n_ans))
 		if args.bidirectional:

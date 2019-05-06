@@ -21,7 +21,7 @@ def parse_args():
 	"""
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--sg_data_path', help="The path of the trainset ")
+	parser.add_argument('--data_dir', help="The path of the trainset ")
 
 	parser.add_argument('--out_dir', help="Output directory where all generated files will be stored")
 
@@ -35,7 +35,13 @@ def read_sg_data(args):
 
 	sg_data = {}
 	for spl in splits:
-		with open(args.sg_data_path.replace('train', spl), 'r') as f:
+
+		if spl == 'test':
+			with open(os.path.join(args.data_dir, '..', 'test_set', 'gold', 'test_sceneGraphs.json'), 'r') as f:
+				sg_data['test'] = json.load(f)
+			continue
+
+		with open(os.path.join(args.data_dir, 'gold', '{}_sceneGraphs.json').format(spl), 'r') as f:
 			sg_data[spl] = json.load(f)
 
 	return sg_data
@@ -172,6 +178,7 @@ def create_img_data(sg_data_spl, args):
 	for spl in sg_data_spl:
 
 		sg_data = sg_data_spl[spl]
+		print(spl, len(sg_data))
 
 		for img_id in sg_data:
 

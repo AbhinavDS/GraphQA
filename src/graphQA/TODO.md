@@ -4,13 +4,9 @@
 7. Check if network params need to be stored
 
 14. Gofai (W)
-16. Check if no question id is being entailed from outside a data split (AG)
-
-25. Test Set consistent: fixed larger dataset - Fix VG and MAC
 13. Evaluation metrics - Grounding metric
 
 22. think about meta_data file structure
-24. single script file with chmod - vg data generation
 27. ROI check, put max min
 
 ## Scenegraph gen

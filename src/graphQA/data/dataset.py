@@ -2,6 +2,7 @@ import numpy as np
 import json
 import h5py
 import torch
+import os
 from torch.utils.data import Dataset
 
 import utils.preprocess as preprocess_utils
@@ -18,7 +19,7 @@ class GQADataset(Dataset):
 		self.image_features_path = self.args.img_feat_data_path
 		image_info_json_path = self.args.img_info_path
 		vocab_json = self.args.word_vocab_path
-		relations_vocab_json = self.args.rel_vocab_path
+		sg_vocab_json = self.args.rel_vocab_path
 		meta_data_json = self.args.meta_data_path
 		valid_img_ids_path = self.args.valid_img_ids_path
 
@@ -41,9 +42,9 @@ class GQADataset(Dataset):
 				
 		self.vocab = utils.load_vocab(vocab_json)
 
-		self.relations_vocab = utils.load_vocab(relations_vocab_json)
+		self.sg_vocab = utils.load_vocab(sg_vocab_json)
 		self.rel_embeddings_mat = None
-
+		self.obj_names_embeddings_mat = None
 		self.meta_data = utils.load_vocab(meta_data_json)
 
 		if args.use_glove:
@@ -52,10 +53,18 @@ class GQADataset(Dataset):
 			if self.args.use_rel_emb:
 				self.rel_word2vec_path = args.rel_word2vec_path
 				self.rel_emb_dim = args.rel_emb_dim
-			self.load_embeddings()
+				self.rel_embeddings_mat = self.load_embeddings(self.sg_vocab['relation_token_to_idx'], self.rel_emb_dim, self.rel_word2vec_path)
+			elif self.args.use_rel_words:
+				self.rel_word2vec_path = args.rel_word2vec_path
+				self.obj_name_word2vec_path = args.obj_name_word2vec_path
+				self.rel_emb_dim = args.rel_emb_dim
+				self.obj_emb_dim = args.obj_emb_dim
+				self.rel_embeddings_mat = self.load_embeddings(self.sg_vocab['relation_token_to_idx'], self.rel_emb_dim, self.rel_word2vec_path)
+				self.obj_names_embeddings_mat = self.load_embeddings(self.sg_vocab['object_token_to_idx'], self.obj_emb_dim, self.obj_name_word2vec_path)
+			
+			self.embeddings_mat = self.load_embeddings(self.vocab['question_token_to_idx'], self.ques_word_vec_dim, self.word2vec_path)
 
 		print("Data Read successful", len(self.questions_keys))
-		#raise('Check Error')
 
 	def get_data_config(self):
 
@@ -65,8 +74,9 @@ class GQADataset(Dataset):
 
 		config = {}
 		config['max_num_objs'] = self.meta_data['max_num_objs']
+		config['max_objs'] = len(self.sg_vocab['object_token_to_idx'])
 		config['max_ques_len'] = self.meta_data['max_ques_len']
-		config['max_rels'] = len(self.relations_vocab['relation_token_to_idx'])
+		config['max_rels'] = len(self.sg_vocab['relation_token_to_idx'])
 		config['variable_lengths'] = True
 		config['n_ans'] = len(self.vocab['answer_token_to_idx'])
 		config['ques_start_id'] = preprocess_utils.SPECIAL_TOKENS['<START>']
@@ -77,27 +87,20 @@ class GQADataset(Dataset):
 
 		return config
 
-	def load_embeddings(self):
+	def load_embeddings(self, vocab, emb_dim, word2vec_path):
 
-		self.embeddings_mat = np.random.normal(scale=0.6, size=(len(self.vocab['question_token_to_idx']), self.ques_word_vec_dim))
+		if not os.path.exists(word2vec_path):
+			return None
 
-		with open(self.word2vec_path, 'r') as f:
+		emb_mat = np.random.normal(scale=0.6, size=(len(vocab), emb_dim))
+
+		with open(word2vec_path, 'r') as f:
 			embedding_dict = json.load(f)
 
 			for word in embedding_dict:
-				self.embeddings_mat[self.vocab['question_token_to_idx'][word]] = np.array(embedding_dict[word])
+				emb_mat[vocab[word]] = np.array(embedding_dict[word])
 
-		self.embeddings_mat = torch.as_tensor(self.embeddings_mat, dtype=torch.float)
-
-		if self.args.use_rel_emb:
-			self.rel_embeddings_mat = np.random.normal(scale=0.6, size=(len(self.relations_vocab['relation_token_to_idx']), self.rel_emb_dim))
-
-			with open(self.rel_word2vec_path, 'r') as f:
-				rel_embedding_dict = json.load(f)
-				for word in rel_embedding_dict:
-					self.rel_embeddings_mat[self.relations_vocab['relation_token_to_idx'][word]] = np.array(rel_embedding_dict[word])
-
-			self.rel_embeddings_mat = torch.as_tensor(self.rel_embeddings_mat, dtype=torch.float)
+		return torch.as_tensor(emb_mat, dtype=torch.float)
 
 	def __len__(self):
 		return len(self.questions_keys)
@@ -129,56 +132,43 @@ class GQADataset(Dataset):
 		width, height = (float)(sg['width']), (float)(sg['height'])
 
 		if self.args.use_rel_emb:
-			# Get object dims for roi pooling and Create adjacency matrix with relations (FOR GCN_RELS)
-			num_relations = len(self.relations_vocab['relation_token_to_idx'])
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs'] * num_relations))
-			objects = np.zeros((self.meta_data['max_num_objs'], 4))
-			object_keys = list(sg['objects'].keys())
-			for num_objs, obj_key in enumerate(object_keys):
-
-				if num_objs >= self.meta_data['max_num_objs']:
-					break
-
-				obj = sg['objects'][obj_key]
-				objects[num_objs][0] = max(obj['x'] / width, 0.0)
-				objects[num_objs][1] = max(obj['y'] / height, 0.0)
-				objects[num_objs][2] = min((obj['x'] + obj['w']) / width, 1.0)
-				objects[num_objs][3] = min((obj['y'] + obj['h']) / height, 1.0)
-				# print (obj['x'], obj['y'], obj['x'] + obj['w'], obj['y'] + obj['h'], objects[num_objs])
-				for relation in obj["relations"]:
-					rel_encoded = preprocess_utils.encode([relation['name']],
-													 self.relations_vocab['relation_token_to_idx'],
-													 allow_unk=True)
-					assert len(rel_encoded) == 1
-					obj_id = object_keys.index(relation['object'])
-					A_id = rel_encoded[0] * self.meta_data['max_num_objs'] + obj_id
-					A[num_objs][A_id] = 1 # can give relation id in OxO matrix if needed
 		else:
-			# Get object dims for roi pooling and Create adjacency matrix with relations (FOR_SIMPLE_GCN)
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs']))
-			objects = np.zeros((self.meta_data['max_num_objs'], 4), dtype=np.float32) - 1
-			
-			object_keys = list(sg['objects'].keys())
-			for num_objs, obj_key in enumerate(object_keys):
 
-				if num_objs >= self.meta_data['max_num_objs']:
-					break
+		num_relations = len(self.sg_vocab['relation_token_to_idx'])
+		objects = np.zeros((self.meta_data['max_num_objs'], 4), dtype=np.float32) - 1
+		object_keys = list(sg['objects'].keys())
+		for num_objs, obj_key in enumerate(object_keys):
 
-				obj = sg['objects'][obj_key]
-				objects[num_objs][0] = max(obj['x'] / width, 0.0)
-				objects[num_objs][1] = max(obj['y'] / height, 0.0)
-				objects[num_objs][2] = min((obj['x'] + obj['w']) / width, 1.0)
-				objects[num_objs][3] = min((obj['y'] + obj['h']) / height, 1.0)
-				# print (obj['x'], obj['y'], obj['x'] + obj['w'], obj['y'] + obj['h'], objects[num_objs])
-				for relation in obj["relations"]:
-					obj_id = object_keys.index(relation['object'])
+			if num_objs >= self.meta_data['max_num_objs']:
+				break
 
-					if obj_id >= self.meta_data['max_num_objs']:
-						continue
+			obj = sg['objects'][obj_key]
+			objects[num_objs][0] = max(obj['x'] / width, 0.0)
+			objects[num_objs][1] = max(obj['y'] / height, 0.0)
+			objects[num_objs][2] = min((obj['x'] + obj['w']) / width, 1.0)
+			objects[num_objs][3] = min((obj['y'] + obj['h']) / height, 1.0)
+			# print (obj['x'], obj['y'], obj['x'] + obj['w'], obj['y'] + obj['h'], objects[num_objs])
+			for relation in obj["relations"]:
+				rel_encoded = preprocess_utils.encode([relation['name']],
+												 self.sg_vocab['relation_token_to_idx'],
+												 allow_unk=True)
+				assert len(rel_encoded) == 1
+				obj_id = object_keys.index(relation['object'])
 
-					# can give relation id in OxO matrix if needed
-					A[num_objs][obj_id] = 1		
+				if obj_id >= self.meta_data['max_num_objs']:
+					continue
 
+				A_id = rel_encoded[0] * self.meta_data['max_num_objs'] + obj_id
+				
+				if self.args.use_rel_emb:
+					A[num_objs][A_id] = 1 # can give relation id in OxO matrix if needed
+				elif self.args.use_rel_words:
+					A[num_objs][obj_id] = rel_encoded[0]
+				else:
+					A[num_objs][obj_id] = 1
+	
 		#Increase number of object to correct value (since indexed from 0)
 		#num_objs += 1
 		# Get image feature from image
@@ -205,5 +195,5 @@ class GQADataset(Dataset):
 				'num_objs': num_objs,
 				'A': torch.as_tensor(A, dtype=torch.float),
 				'image_feat': torch.as_tensor(image_feat, dtype=torch.float),
-				'ques_id': idx,
+				'ques_id': idx
 			}

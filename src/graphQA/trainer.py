@@ -23,12 +23,16 @@ class Trainer:
 		self.train_dataset = train_dataset
 		self.val_dataset = val_dataset
 		self.use_glove = args.use_glove
-
+		self.use_rel_words = args.use_rel_words
 		if self.use_glove:
 			self.embeddings_mat = self.train_dataset.embeddings_mat
 			if self.args.use_rel_emb:
 				self.rel_embeddings_mat = self.train_dataset.rel_embeddings_mat
 				self.model = BottomUpGCN(args, word2vec=self.embeddings_mat, rel_word2vec=self.rel_embeddings_mat)
+			elif self.args.use_rel_words:
+				self.rel_embeddings_mat = self.train_dataset.rel_embeddings_mat
+				self.obj_names_embeddings_mat = self.train_dataset.obj_names_embeddings_mat
+				self.model = BottomUpGCN(args, word2vec=self.embeddings_mat, rel_word2vec=self.rel_embeddings_mat, obj_name_word2vec=self.obj_names_embeddings_mat)
 			else:
 				if args.use_bua:
 					self.model = BottomUp(args, word2vec=self.embeddings_mat)
@@ -108,7 +112,7 @@ class Trainer:
 				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
 				
 				#print(ans_distrib.size(), ans_output.size())
-				if self.args.criterion == "bce" and self.args.use_bua:
+				if self.args.criterion == "bce" and self.args.use_bua or self.args.use_bua2:
 					batch_loss = self.instance_bce_with_logits(ans_distrib, ans_output)
 				else:
 					batch_loss = self.criterion(ans_distrib, ans_output)
