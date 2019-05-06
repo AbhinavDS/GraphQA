@@ -5,17 +5,14 @@
 
 14. Gofai (W)
 13. Evaluation metrics - Grounding metric
-
 22. think about meta_data file structure
-27. ROI check, put max min
 
 ## Scenegraph gen
 28. Find other model
 
-29. bottom up from source
-30. gcn word
 31. attention mac
 32. debug mac
+33. debug evaluator accuracy variation
 
 
 ## PERMISSION DENIED SOLVE IT (IMMM)
