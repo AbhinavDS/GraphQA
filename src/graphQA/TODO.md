@@ -10,11 +10,9 @@
 
 ## AD
 25. Test Set consistent: fixed larger dataset
-26. Consistency: Entailed over same image or different images
 13. Evaluation metrics - Grounding metric
 
 ## AG
-21. Run without gcn
 22. think about meta_data file structure
 24. single script file with chmod
 27. ROI check, put max min

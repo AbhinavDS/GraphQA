@@ -131,17 +131,17 @@ print("Loading choices...")
 #choices = loadFile(args.choices.format(tier = args.tier))
 choices = loadFile(os.path.join(args.data_dir, 'test_choices.json'))
 
-valid_img_ids = loadFile(os.path.join(args.data_dir, 'vg_data', 'valid_img_ids.json'))
-questions = {}
-for qid in org_questions:
-	if org_questions[qid]['imageId'] in valid_img_ids:
-		questions[qid] = org_questions[qid]
-
 # Load predictions and turn them into a dictionary
 print("Loading predictions...")
 #predictions = loadFile(args.predictions.format(tier = args.tier))
 predictions = loadFile(args.predictions)
 predictions = {p["questionId"]: p["prediction"] for p in predictions}
+
+#valid_img_ids = loadFile(os.path.join(args.data_dir, 'vg_data', 'valid_img_ids.json'))
+questions = {}
+for qid in org_questions:
+	if qid in predictions:
+		questions[qid] = org_questions[qid]
 
 # Make sure all question have predictions
 for qid in questions:
@@ -152,7 +152,7 @@ for qid in questions:
 # Load attentions and turn them into a dictionary
 attentions = None
 if args.grounding:
-	with open(args.attentions.format(tier = args.tier)) as attentionsFile:
+	with open(args.attentions) as attentionsFile:
 		attentions = json.load(attentionsFile)
 		attentions = {a["questionId"]: a["attention"] for a in attentions}
 
