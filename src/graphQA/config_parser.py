@@ -101,7 +101,7 @@ def parse_args():
 	parser.add_argument('--display_every', type=int, default=1, help="Loss statistics to display after every n batches")
 	parser.add_argument('--drop_prob', default=0.0, type=float, help="Dropout probability for all linear layers")
 	
-	parser.add_argument('--nl', default='relu', choices=['relu', 'gated_tanh'], help="Type of Non linearity to be used in the network (relu, gated_tanh)")
+	parser.add_argument('--nl', default='relu', choices=['relu', 'gated_tanh', 'tanh'], help="Type of Non linearity to be used in the network (relu, gated_tanh, tanh)")
 
 	# Options for Question Encoder
 	parser.add_argument('--n_ques_emb', type=int, default=1024, help="The dimension of the hidden layer in Question Model")
@@ -126,5 +126,9 @@ def parse_args():
 	parser.add_argument('--use_img_feats', action="store_true", default=False, help="Use Average Image Features in Attention Model")
 	parser.add_argument('--pool_w', default=20, type=int, help="Pooling width for Image features in Attention Module")
 	parser.add_argument('--pool_h', default=15, type=int, help="Pooling height for Image features in Attention Module")
+
+
+	parser.add_argument('--use_bua', action="store_true", default=False, help="Use Git BottomUp")
+	parser.add_argument('--use_bua2', action="store_true", default=False, help="Use Git BottomUp2")
 
 	return parser.parse_args(namespace = args)

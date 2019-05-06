@@ -37,7 +37,6 @@ class BottomUpGCN(nn.Module):
 		if args.bidirectional:
 			self.ques_proj = wn(nn.Linear(2*args.n_ques_emb, args.n_ques_emb))
 
-		self.no_gcn = args.no_gcn
 		self.use_img_feats = args.use_img_feats
 		self.max_ques_len = args.max_ques_len
 		self.max_rels = args.max_rels

@@ -10,6 +10,8 @@ import numpy as np
 from tensorboardX import SummaryWriter
 
 from .models.bottom_up_gcn import BottomUpGCN
+from .models.git_bua import BaseModel as BottomUp
+from .models.git_bua2 import BaseModel2 as BottomUp2
 from torch.utils.data import DataLoader
 
 class Trainer:
@@ -28,7 +30,12 @@ class Trainer:
 				self.rel_embeddings_mat = self.train_dataset.rel_embeddings_mat
 				self.model = BottomUpGCN(args, word2vec=self.embeddings_mat, rel_word2vec=self.rel_embeddings_mat)
 			else:
-				self.model = BottomUpGCN(args, word2vec=self.embeddings_mat)
+				if args.use_bua:
+					self.model = BottomUp(args, word2vec=self.embeddings_mat)
+				elif args.use_bua2:
+					self.model = BottomUp2(args, word2vec=self.embeddings_mat)
+				else:
+					self.model = BottomUpGCN(args, word2vec=self.embeddings_mat)
 		else:
 			self.model = BottomUpGCN(args)
 
@@ -47,6 +54,20 @@ class Trainer:
 		self.log = args.log
 		if self.log:
 			self.writer = SummaryWriter(args.log_dir)
+
+	def instance_bce_with_logits(self, logits, labels):
+		assert logits.dim() == 2
+		loss = nn.functional.binary_cross_entropy_with_logits(logits, labels)
+		loss *= labels.size(1)
+		return loss
+
+
+	def compute_score_with_logits(self, logits, labels):
+		logits = torch.max(logits, 1)[1].data # argmax
+		one_hots = torch.zeros(*labels.size()).cuda()
+		one_hots.scatter_(1, logits.view(-1, 1), 1)
+		scores = (one_hots * labels)
+		return scores
 
 	def train(self):
 
@@ -87,7 +108,11 @@ class Trainer:
 				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj)
 				
 				#print(ans_distrib.size(), ans_output.size())
-				batch_loss = self.criterion(ans_distrib, ans_output)
+				if self.args.criterion == "bce" and self.args.use_bua:
+					batch_loss = self.instance_bce_with_logits(ans_distrib, ans_output)
+				else:
+					batch_loss = self.criterion(ans_distrib, ans_output)
+
 				batch_loss.backward()
 
 				nn.utils.clip_grad_norm_(self.model.parameters(), 0.25)
@@ -101,6 +126,17 @@ class Trainer:
 
 			train_acc = np.mean(train_accuracies)
 			
+			# ques_lens = None
+			# sorted_indices = None
+			# ques_lens = None
+			# img_feats = None
+			# ques = None
+			# objs = None
+			# adj_mat = None
+			# num_obj = None
+			# ans_output = None
+			# ans_distrib = None
+			del ans_output
 			val_loss, val_acc = self.eval()
 
 			self.log_stats(loss, val_loss, train_acc, val_acc, epoch)

@@ -10,6 +10,8 @@ import numpy as np
 from tensorboardX import SummaryWriter
 
 from .models.bottom_up_gcn import BottomUpGCN
+from .models.git_bua import BaseModel as BottomUp
+from .models.git_bua2 import BaseModel2 as BottomUp2
 from torch.utils.data import DataLoader
 
 class Evaluator:
@@ -19,7 +21,12 @@ class Evaluator:
 		self.args = args
 		self.num_epochs = args.num_epochs
 		self.dataset = dataset
-		self.model = BottomUpGCN(args)
+		if args.use_bua:
+			self.model = BottomUp(args)
+		elif args.use_bua2:
+			self.model = BottomUp2(args)
+		else:
+			self.model = BottomUpGCN(args)
 		self.load_ckpt()
 		self.device = self.args.device		
 		self.data_loader = DataLoader(dataset=self.dataset, batch_size=self.args.bsz, shuffle=True, num_workers=1)

@@ -156,7 +156,7 @@ class GQADataset(Dataset):
 		else:
 			# Get object dims for roi pooling and Create adjacency matrix with relations (FOR_SIMPLE_GCN)
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs']))
-			objects = np.zeros((self.meta_data['max_num_objs'], 4), dtype=np.float32)
+			objects = np.zeros((self.meta_data['max_num_objs'], 4), dtype=np.float32) - 1
 			
 			object_keys = list(sg['objects'].keys())
 			for num_objs, obj_key in enumerate(object_keys):
