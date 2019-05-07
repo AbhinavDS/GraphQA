@@ -133,5 +133,8 @@ def parse_args():
 	parser.add_argument('--use_bua', action="store_true", default=False, help="Use Git BottomUp")
 	parser.add_argument('--use_bua2', action="store_true", default=False, help="Use Git BottomUp2")
 	parser.add_argument('--use_mac', action="store_true", default=False, help="Use MAC based network")
+	parser.add_argument('--use_memory_gate', action="store_true", default=False, help="Use memory gate in MAC network")
+	parser.add_argument('--mac_max_steps', default=4, type=int, help="Number of steps to run the MAC operation for")
+	parser.add_argument('--mac_self_attention', default=False, action="store_true", help="Use self attention in MAC unit")
 
 	return parser.parse_args(namespace = args)

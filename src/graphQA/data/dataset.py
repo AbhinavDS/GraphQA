@@ -136,8 +136,7 @@ class GQADataset(Dataset):
 		else:
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs']))
 
-		if self.args.use_rel_words:
-			obj_wrds_mat = np.zeros((self.meta_data['max_num_objs']))
+		obj_wrds_mat = np.zeros((self.meta_data['max_num_objs']))
 
 		num_relations = len(self.sg_vocab['relation_token_to_idx'])
 		objects = np.zeros((self.meta_data['max_num_objs'], 4), dtype=np.float32) - 1

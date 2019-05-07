@@ -10,7 +10,7 @@ import numpy as np
 from tensorboardX import SummaryWriter
 
 from torch.utils.data import DataLoader
-from .models.mac import MacNetwork
+from .models.mac import MACNetwork as MacNetwork
 
 class Trainer:
 

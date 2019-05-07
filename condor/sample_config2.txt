@@ -1,0 +1,11 @@
+--expt_data_dir=/scratch/cluster/ankgarg/gqa/test_data/1p/
+--feats_data_dir=/scratch/cluster/abhinav/gnlp/gqa_data/
+--use_cuda
+--expt_res_base_dir=/scratch/cluster/ankgarg/gqa/graphQA_res
+--log
+--display_every=10
+--num_epochs=50
+--lr=1e-4
+--use_glove
+--get_preds
+--drop_prob=0.3

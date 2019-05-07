@@ -14,39 +14,43 @@ def linear(in_dim, out_dim, bias=True):
 	return lin
 
 class MACNetwork(nn.Module):
-	def __init__(self, n_vocab, dim, embed_hidden=300,
-				max_step=12, self_attention=False, memory_gate=False,
-				classes=28, dropout=0.15, word2vec=None):
+	def __init__(self, args, word2vec=None):
 		super().__init__()
 
-		self.conv = nn.Sequential(nn.Conv2d(2048, dim, 3, padding=1),
+		self.n_vocab = args.ques_vocab_sz
+		self.dim = 512
+		self.embed_hidden = args.ques_word_vec_dim
+		self.max_steps = args.mac_max_steps
+		self.self_attention = args.mac_self_attention
+		self.memory_gate = args.use_memory_gate
+		self.classes = args.n_ans
+		self.dropout = args.drop_prob
+
+		self.conv = nn.Sequential(nn.Conv2d(2048, self.dim, 3, padding=1),
 								nn.ELU(),
-								nn.Conv2d(dim, dim, 3, padding=1),
+								nn.Conv2d(self.dim, self.dim, 3, padding=1),
 								nn.ELU())
 
 		if word2vec is not None:
 			print('Using Pre-trained Word2vec')
-			assert word2vec.size(0) == n_vocab
-			assert word2vec.size(1) == embed_hidden
-            self.embed = nn.Embedding(n_vocab, embed_hidden)
-            self.embed.weight = nn.Parameter(word2vec)
-        else:
-			self.embed = nn.Embedding(n_vocab, embed_hidden)
+			assert word2vec.size(0) == self.n_vocab
+			assert word2vec.size(1) == self.embed_hidden
+			self.embed = nn.Embedding(self.n_vocab, self.embed_hidden)
+			self.embed.weight = nn.Parameter(word2vec)
+		else:
+			self.embed = nn.Embedding(self.n_vocab, self.embed_hidden)
 		
-		self.lstm = nn.LSTM(embed_hidden, dim,
+		self.lstm = nn.LSTM(self.embed_hidden, self.dim,
 						batch_first=True, bidirectional=True)
-		self.lstm_proj = nn.Linear(dim * 2, dim)
+		self.lstm_proj = nn.Linear(self.dim * 2, self.dim)
 
-		self.mac = MACUnit(dim, max_step,
-						self_attention, memory_gate, dropout)
+		self.mac = MACUnit(self.dim, self.max_steps,
+						self.self_attention, self.memory_gate, self.dropout)
 
 
-		self.classifier = nn.Sequential(linear(dim * 3, dim),
+		self.classifier = nn.Sequential(linear(self.dim * 3, self.dim),
 										nn.ELU(),
-										linear(dim, classes))
-
-		self.max_step = max_step
-		self.dim = dim
+										linear(self.dim, self.classes))
 
 		self.reset()
 
