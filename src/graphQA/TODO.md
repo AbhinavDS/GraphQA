@@ -10,9 +10,10 @@
 ## Scenegraph gen
 28. Find other model
 
-31. attention mac
+31. stacked attention
 32. debug mac
 33. debug evaluator accuracy variation
+34. Image blind model without concatenating image features after GCN
 
 
 ## PERMISSION DENIED SOLVE IT (IMMM)

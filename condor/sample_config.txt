@@ -4,7 +4,7 @@
 --expt_res_base_dir=/scratch/cluster/ankgarg/gqa/graphQA_res
 --log
 --display_every=10
---num_epochs=50
+--num_epochs=100
 --lr=1e-4
 --use_glove
 --get_preds
