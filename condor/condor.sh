@@ -29,40 +29,40 @@ Initialdir = /u/abhinav/Projects/GraphQA/condor/
 # Arguments = run_temp.sh --expt_name=1p_gold_g2_relw --gcn_depth=2 --use_rel_words --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
 # Queue 1
 
-Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g0_relw_blind.log
-Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g0_relw_blind.err
-Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g0_relw_blind.out
-Arguments = run.sh --expt_name=5p_gold_g0_relw_blind --gcn_depth=0 --use_rel_words --use_blind --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
-Queue 1
+# Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g0_relw_blind.log
+# Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g0_relw_blind.err
+# Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g0_relw_blind.out
+# Arguments = run.sh --expt_name=5p_gold_g0_relw_blind --gcn_depth=0 --use_rel_words --use_blind --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
+# Queue 1
 
-Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g1_relw_blind.log
-Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g1_relw_blind.err
-Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g1_relw_blind.out
-Arguments = run.sh --expt_name=5p_gold_g1_relw_blind --gcn_depth=1 --use_rel_words --use_blind --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
-Queue 1
+# Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g1_relw_blind.log
+# Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g1_relw_blind.err
+# Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g1_relw_blind.out
+# Arguments = run.sh --expt_name=5p_gold_g1_relw_blind --gcn_depth=1 --use_rel_words --use_blind --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
+# Queue 1
 
-Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g2_relw_blind.log
-Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g2_relw_blind.err
-Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g2_relw_blind.out
-Arguments = run.sh --expt_name=5p_gold_g2_relw_blind --gcn_depth=2 --use_rel_words --use_blind --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
-Queue 1
+# Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g2_relw_blind.log
+# Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g2_relw_blind.err
+# Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g2_relw_blind.out
+# Arguments = run.sh --expt_name=5p_gold_g2_relw_blind --gcn_depth=2 --use_rel_words --use_blind --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
+# Queue 1
 
-Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g0_rel_new.log
-Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g0_rel_new.err
-Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g0_rel_new.out
-Arguments = run.sh --expt_name=5p_gold_g0_rel_new --gcn_depth=0 --use_rel_emb --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
-Queue 1
+# Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g0_rel_new.log
+# Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g0_rel_new.err
+# Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g0_rel_new.out
+# Arguments = run.sh --expt_name=5p_gold_g0_rel_new --gcn_depth=0 --use_rel_emb --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
+# Queue 1
 
-Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g1_rel_new.log
-Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g1_rel_new.err
-Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g1_rel_new.out
-Arguments = run.sh --expt_name=5p_gold_g1_rel_new --gcn_depth=1 --use_rel_emb --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
-Queue 1
+# Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g1_rel_new.log
+# Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g1_rel_new.err
+# Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g1_rel_new.out
+# Arguments = run.sh --expt_name=5p_gold_g1_rel_new --gcn_depth=1 --use_rel_emb --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
+# Queue 1
 
 Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g2_rel_new.log
 Error = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g2_rel_new.err
 Output = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g2_rel_new.out
-Arguments = run.sh --expt_name=5p_gold_g2_rel_new --gcn_depth=2 --use_rel_emb --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=32
+Arguments = run.sh --expt_name=5p_gold_g2_rel_new --gcn_depth=2 --use_rel_emb --n_attn=512 --n_ans_gate=512 --n_qi_gate=512 --n_ques_emb=512 --bsz=16
 Queue 1
 
 # Log = /u/abhinav/Projects/condor_gnlp/logs/5p_gold_g5_bce.log

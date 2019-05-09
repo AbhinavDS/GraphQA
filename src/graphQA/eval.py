@@ -312,7 +312,7 @@ def computeGroundingScore(question, sceneGraph, attentionMap):
 	# add answer regions
 	regions += [getRegion(sceneGraph, pointer) for pointer in question["annotations"]["fullAnswer"].values()]
 	# add all the image if the question refers to the whole scene
-	if any(("scene" in c) for c in question["semantic"]):
+	if any(("scene" in c['argument']) for c in question["semantic"]): # Or easier would be to just search in sematicstr perhaps
 		regions.append((0, 0, 1, 1))
 	
 	# prepare attention map
