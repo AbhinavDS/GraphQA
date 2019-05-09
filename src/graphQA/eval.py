@@ -317,7 +317,7 @@ def computeGroundingScore(question, sceneGraph, attentionMap):
 	
 	# prepare attention map
 	if args.objectFeatures:
-		cells = [((x0, y0, x1, y1), attention) for x0, y0, x1, y1, attention in cells]
+		cells = [((x0, y0, x1, y1), attention) for x0, y0, x1, y1, attention in attentionMap]
 	else:
 		cells = [(getCell(i, j), attentionMap[i][j]) for i in range(args.mapSize) for j in range(args.mapSize)]
 	
