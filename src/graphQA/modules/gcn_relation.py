@@ -9,16 +9,20 @@ class GCN(nn.Module):
 		super(GCN, self).__init__()
 		self.device = args.device
 		self.n_img_feats = args.n_img_feats
+		self.r_img_feats = args.obj_emb_dim # kept same as obj dimension
 		self.max_rels = args.max_rels
 		self.rel_emb_dim = args.rel_emb_dim
 		self.gcn_depth = args.gcn_depth
 		self.weights_init = args.weights_init
 		self.layers = nn.ModuleList()
 
+		self.reduced = wn(nn.Linear(self.n_img_feats, self.r_img_feats));
+		nn.init.xavier_uniform_(self.reduced.weight);
+
 		assert (self.gcn_depth >= 0)
 		for i in range(self.gcn_depth):
-			self.add_layer(wn(nn.Linear(self.n_img_feats,self.n_img_feats)))
-			self.add_layer(wn(nn.Linear(self.n_img_feats + self.rel_emb_dim, self.n_img_feats)))
+			self.add_layer(wn(nn.Linear(self.r_img_feats,self.r_img_feats)))
+			self.add_layer(wn(nn.Linear(self.r_img_feats + self.rel_emb_dim, self.r_img_feats)))
 		self.a = nn.Tanh()
 		if rel_word2vec is not None:
 			print('Using Pre-trained Word2vec for Relation')
@@ -45,6 +49,7 @@ class GCN(nn.Module):
 		# Graph convolution: feature at object p = weighted feature at object p + sum of weighted features from the neighbours
 		# Use relational embedding when calculating features from neighbours, instead of just x
 
+		x = self.reduced(x)
 		batch_size, objects, _ = x.size()
 		rel_input = torch.LongTensor(list(rel for rel in range(self.max_rels))).to(self.device)
 		rel_input = rel_input.unsqueeze(0).unsqueeze(1).repeat(batch_size, objects, 1).view(batch_size, -1)

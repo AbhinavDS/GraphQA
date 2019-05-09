@@ -23,13 +23,20 @@ class TopDownAttention(nn.Module):
 		self.max_num_objs = args.max_num_objs
 		self.use_img_feats = args.use_img_feats
 		self.use_rel_words = args.use_rel_words
+		self.use_rel_emb = args.use_rel_emb
+		self.use_blind = args.use_blind
 
 		if self.use_img_feats:
 			self.img_size = (args.pool_w, args.pool_h)
 			self.avg_pool = nn.AvgPool2d(self.img_size)
 			self.attn_gate = NonLinearity(2 * args.n_img_feats + args.n_ques_emb, args.n_attn, args.nl, args.drop_prob)
 		elif self.use_rel_words:
-			self.attn_gate = NonLinearity(args.n_img_feats + args.n_ques_emb + args.obj_emb_dim, args.n_attn, args.nl, args.drop_prob)
+			if self.use_blind:
+				self.attn_gate = NonLinearity(args.n_ques_emb + args.obj_emb_dim, args.n_attn, args.nl, args.drop_prob)
+			else:
+				self.attn_gate = NonLinearity(args.n_img_feats + args.n_ques_emb + args.obj_emb_dim, args.n_attn, args.nl, args.drop_prob)
+		elif self.use_rel_emb:
+			self.attn_gate = NonLinearity(args.n_ques_emb + args.obj_emb_dim, args.n_attn, args.nl, args.drop_prob)
 		else:
 			self.attn_gate = NonLinearity(args.n_img_feats + args.n_ques_emb, args.n_attn, args.nl, args.drop_prob)
 

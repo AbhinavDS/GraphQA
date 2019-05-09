@@ -131,15 +131,16 @@ class GQADataset(Dataset):
 		sg = self.scene_graphs[image_idx]
 		width, height = (float)(sg['width']), (float)(sg['height'])
 
+		obj_wrds_mat = np.zeros((self.meta_data['max_num_objs']))
+		num_relations = len(self.sg_vocab['relation_token_to_idx'])
+		objects = np.zeros((self.meta_data['max_num_objs'], 4), dtype=np.float32) - 1
+
 		if self.args.use_rel_emb:
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs'] * num_relations))
 		else:
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs']))
 
-		obj_wrds_mat = np.zeros((self.meta_data['max_num_objs']))
 
-		num_relations = len(self.sg_vocab['relation_token_to_idx'])
-		objects = np.zeros((self.meta_data['max_num_objs'], 4), dtype=np.float32) - 1
 		object_keys = list(sg['objects'].keys())
 		for num_objs, obj_key in enumerate(object_keys):
 

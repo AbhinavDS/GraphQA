@@ -20,6 +20,7 @@ class GCN(nn.Module):
 		self.weights_init = args.weights_init
 		self.layers = nn.ModuleList()
 		self.obj_emb_dim = args.obj_emb_dim
+		self.use_blind = args.use_blind
 
 		assert (self.obj_emb_dim == self.rel_emb_dim)
 
@@ -78,5 +79,8 @@ class GCN(nn.Module):
 			bp = torch.bmm(A, xr).view(batch_size, objects, objects, -1).sum(dim=2, keepdim=False)
 			x = self.a(self.layers[i](x) + torch.div(bp, denom) + x)
 		
-		return torch.cat([x, obj_img_feats], 2)
+		if self.use_blind:
+			return x
+		else:
+			return torch.cat([x, obj_img_feats], 2)
 

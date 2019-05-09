@@ -118,6 +118,7 @@ def parse_args():
 	parser.add_argument('--use_rel_emb', action="store_true", default=False, help="Use Relation Embedding")
 	parser.add_argument('--use_rel_words', action="store_true", default=False, help="Use object names and relations in GCN")
 	parser.add_argument('--obj_emb_dim', default=300, type=int, help="The dimensionality of the object name embedding")
+	parser.add_argument('--use_blind', action="store_true", default=False, help="Use blind model (only applicable with rel_words)")
 
 	# Options for Answering Model
 	parser.add_argument('--n_qi_gate', type=int, default=1024, help="The dimension of the Question-Image Gate in Answerer Model")

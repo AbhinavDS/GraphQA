@@ -26,9 +26,13 @@ class BottomUpGCN(nn.Module):
 		self.img_gate = NonLinearity(args.n_img_feats, args.n_qi_gate, args.nl,args.drop_prob)
 		if args.use_rel_emb:
 			self.gcn = GCNRelation(args, rel_word2vec=rel_word2vec)
+			self.img_gate = NonLinearity(args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
 		elif args.use_rel_words:
 			self.gcn = GCNRelWords(args, rel_word2vec=rel_word2vec, obj_name_word2vec=obj_name_word2vec)
-			self.img_gate = NonLinearity(args.n_img_feats + args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
+			if args.use_blind:
+				self.img_gate = NonLinearity(args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
+			else:
+				self.img_gate = NonLinearity(args.n_img_feats + args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
 		else:
 			self.gcn = GCN(args)
 
