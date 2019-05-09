@@ -81,7 +81,7 @@ parser.add_argument('--data_dir', type=str, help="Data directory")
 parser.add_argument('--attentions',     default="{tier}_attentions.json",    type = str,    help = "Attentions file name format.")
 parser.add_argument('--consistency',    action="store_true",        help = "True to compute consistency score (Need to provide answers to questions in val_all_questions.json).")
 parser.add_argument('--grounding',      action="store_true",        help = "True to compute grounding score (If model uses attention).")
-parser.add_argument('--objectFeatures', action="store_true",        help = "True for object-based attention (False for spatial).")
+parser.add_argument('--spatialFeatures', action="store_true",        help = "False for object-based attention (True for spatial).")
 parser.add_argument('--mapSize',    default = 7,    type = int, help = "Optional, only to get attention score. Images features map size, mapSize * mapSize")
 args = parser.parse_args()
 
@@ -135,6 +135,12 @@ choices = loadFile(os.path.join(args.data_dir, 'test_choices.json'))
 print("Loading predictions...")
 #predictions = loadFile(args.predictions.format(tier = args.tier))
 predictions = loadFile(args.predictions)
+
+# Load attentions and turn them into a dictionary
+attentions = None
+if args.grounding:
+	attentions = {a["questionId"]: a["attention"] for a in predictions}	
+
 predictions = {p["questionId"]: p["prediction"] for p in predictions}
 
 #valid_img_ids = loadFile(os.path.join(args.data_dir, 'vg_data', 'valid_img_ids.json'))
@@ -149,12 +155,6 @@ for qid in questions:
 		print("no prediction for question {}. Please add prediction for all questions.".format(qid))
 		raise Exception("missing predictions")
 
-# Load attentions and turn them into a dictionary
-attentions = None
-if args.grounding:
-	with open(args.attentions) as attentionsFile:
-		attentions = json.load(attentionsFile)
-		attentions = {a["questionId"]: a["attention"] for a in attentions}
 
 ##### Scores data structures initialization
 ##########################################################################################
@@ -316,10 +316,10 @@ def computeGroundingScore(question, sceneGraph, attentionMap):
 		regions.append((0, 0, 1, 1))
 	
 	# prepare attention map
-	if args.objectFeatures:
-		cells = [((x0, y0, x1, y1), attention) for x0, y0, x1, y1, attention in attentionMap]
-	else:
+	if args.spatialFeatures:
 		cells = [(getCell(i, j), attentionMap[i][j]) for i in range(args.mapSize) for j in range(args.mapSize)]
+	else:
+		cells = [((x0, y0, x1, y1), attention) for x0, y0, x1, y1, attention in attentionMap]
 	
 	# compare attention map to gold regions
 	scores = []

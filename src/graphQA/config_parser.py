@@ -139,4 +139,7 @@ def parse_args():
 	parser.add_argument('--mac_self_attention', default=False, action="store_true", help="Use self attention in MAC unit")
 	parser.add_argument('--mac_dim', default=512, type=int, help="The default dimension of the LSTM cells in the MAC network")
 
+	# Options for extra metric optimizations
+	parser.add_argument('--lambda_ground', type=float, default=1, help="Weight for Grounding Loss")
+	
 	return parser.parse_args(namespace = args)
