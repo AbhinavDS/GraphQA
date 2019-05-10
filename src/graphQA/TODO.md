@@ -20,4 +20,8 @@
 39. Grounding Metric (ADS)
 
 40. ?? When to add some probability from scenegraph generated!!
+41. Test on a data split that is homogenous in structural types: The questions in current splits can be answered with a relatively high confidence if you know the words in the image and the question. Moreover, the mean and standard deviation of number of relate questions is a bit higher in this split than overall dataset which might be the reason behind a higher performance than MAC baseline.
+42. Discuss the dimensionality of the Question Encoder Layer in SAN
+43. Different AvgPool Layer size for Image and Object Features? Resolve the confusion.
+
 ## PERMISSION DENIED SOLVE IT (IMMM)

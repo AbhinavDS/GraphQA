@@ -10,6 +10,7 @@ import numpy as np
 from tensorboardX import SummaryWriter
 
 from .models.bottom_up_gcn import BottomUpGCN
+from .models.san import SAN
 from torch.utils.data import DataLoader
 
 class Evaluator:
@@ -19,7 +20,14 @@ class Evaluator:
 		self.args = args
 		self.num_epochs = args.num_epochs
 		self.dataset = dataset
-		self.model = BottomUpGCN(args)
+
+		# Set the Model variable to the class that needs to be used
+		if args.use_san:
+			Model = SAN
+		else:
+			Model = BottomUpGCN
+
+		self.model = Model(args)
 		self.load_ckpt()
 		self.device = self.args.device		
 		self.data_loader = DataLoader(dataset=self.dataset, batch_size=self.args.bsz, num_workers=4)

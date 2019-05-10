@@ -139,4 +139,10 @@ def parse_args():
 	parser.add_argument('--mac_self_attention', default=False, action="store_true", help="Use self attention in MAC unit")
 	parser.add_argument('--mac_dim', default=512, type=int, help="The default dimension of the LSTM cells in the MAC network")
 
+	# Options for SAN
+	parser.add_argument('--use_san', action="store_true", default=False, help="Use Stacked Attention Network")
+	parser.add_argument('--n_attn_layers', default=2, type=int, help="Number of attentions in the stack of SAN")
+	parser.add_argument('--san_dim_in', default=512, type=int, help="Dimension of the Input tensors to SAN")
+	parser.add_argument('--san_dim_mid', default=256, type=int, help="Dimension of the Intermediate tensors in SAN")
+
 	return parser.parse_args(namespace = args)

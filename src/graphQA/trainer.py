@@ -10,6 +10,7 @@ import numpy as np
 from tensorboardX import SummaryWriter
 
 from .models.bottom_up_gcn import BottomUpGCN
+from .models.san import SAN
 from .models.git_bua import BaseModel as BottomUp
 from .models.git_bua2 import BaseModel2 as BottomUp2
 from torch.utils.data import DataLoader
@@ -24,24 +25,30 @@ class Trainer:
 		self.val_dataset = val_dataset
 		self.use_glove = args.use_glove
 		self.use_rel_words = args.use_rel_words
+		
+		# Set the Model variable to the class that needs to be used
+		if args.use_san:
+			Model = SAN
+		elif args.use_bua:
+			Model = BottomUp
+		elif args.use_bua2:
+			Model = BottomUp2
+		else:
+			Model = BottomUpGCN
+
+		self.embeddings_mat = None
+		self.rel_embeddings_mat = None
+		self.obj_names_embeddings_mat = None
+
 		if self.use_glove:
 			self.embeddings_mat = self.train_dataset.embeddings_mat
 			if self.args.use_rel_emb:
 				self.rel_embeddings_mat = self.train_dataset.rel_embeddings_mat
-				self.model = BottomUpGCN(args, word2vec=self.embeddings_mat, rel_word2vec=self.rel_embeddings_mat)
 			elif self.args.use_rel_words:
 				self.rel_embeddings_mat = self.train_dataset.rel_embeddings_mat
 				self.obj_names_embeddings_mat = self.train_dataset.obj_names_embeddings_mat
-				self.model = BottomUpGCN(args, word2vec=self.embeddings_mat, rel_word2vec=self.rel_embeddings_mat, obj_name_word2vec=self.obj_names_embeddings_mat)
-			else:
-				if args.use_bua:
-					self.model = BottomUp(args, word2vec=self.embeddings_mat)
-				elif args.use_bua2:
-					self.model = BottomUp2(args, word2vec=self.embeddings_mat)
-				else:
-					self.model = BottomUpGCN(args, word2vec=self.embeddings_mat)
-		else:
-			self.model = BottomUpGCN(args)
+		
+		self.model = Model(args, word2vec=self.embeddings_mat, rel_word2vec=self.rel_embeddings_mat, obj_name_word2vec=self.obj_names_embeddings_mat)
 
 		self.device = self.args.device
 
