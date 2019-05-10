@@ -14,10 +14,9 @@
 ## IMPORTANT
 28. Scenegraph gen:: Find other model - ADS
 31. stacked attention - AG
-36. Non - RL Mertics optimization (2 (AG) + 1 (ADS))
+36. Non - RL Mertics optimization (2 (AG))
 37. RL based metric optimization (2 (AG) + 1 (ADS))
 38. GOFAI
-39. Grounding Metric (ADS)
 
 40. ?? When to add some probability from scenegraph generated!!
 ## PERMISSION DENIED SOLVE IT (IMMM)
