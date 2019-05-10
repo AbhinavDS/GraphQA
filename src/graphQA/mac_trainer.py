@@ -1,5 +1,5 @@
 """
-Module that controls the training of the graphQA module
+Module that controls the training of the graphQA module using MAC network
 """
 
 import os

@@ -14,7 +14,7 @@ def parse_args():
 
 	return parser.parse_args()
 
-def create_choices(fl, args):
+def create_choices(src_choices, fl, args):
 
 	split = fl.split('_')[1]
 	print(fl, split)
@@ -25,20 +25,24 @@ def create_choices(fl, args):
 		keys = list(data.keys())
 
 	choices_data = {}
-	with open(args.src, 'r') as f:
-		src_choices = json.load(f)
+	for k in keys:
+		choices_data[k] = src_choices[k]
 
-		for k in keys:
-			choices_data[k] = src_choices[k]
-
+	print('Writing Choices', split)
 	with open(os.path.join(args.data_dir, '{}_choices.json'.format(split)), 'w') as f:
 		json.dump(choices_data, f)
 
 if __name__ == "__main__":
 
 	args = parse_args()
+
+	print('Reading Source Choices')
+	with open(args.src, 'r') as f:
+		src_choices = json.load(f)
+
+	print('Initiating Filtering')
 	filenames = ['balanced_train_data.json', 'balanced_val_data.json']
 
 	for fl in filenames:
 		if os.path.exists(os.path.join(args.data_dir, fl)):
-			create_choices(fl, args)
+			create_choices(src_choices, fl, args)
