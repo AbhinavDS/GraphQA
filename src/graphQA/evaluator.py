@@ -49,6 +49,9 @@ class Evaluator:
 		else:
 			preds_list = None
 
+		if self.args.opt_met:
+			valid_total, plausible_total, samples = 0.0, 0.0, 0
+
 		for i, batch in enumerate(self.data_loader):
 
 			# Unpack the items from the batch tensor
@@ -64,15 +67,28 @@ class Evaluator:
 			ques_ids = batch['ques_id'].to(self.device)[sorted_indices]
 			obj_wrds = batch['obj_wrds'].to(self.device)[sorted_indices]
 
+			if self.args.opt_met:
+				valid_ans = batch['valid_ans'].to(self.device)[sorted_indices]
+				plausible_ans = batch['plausible_ans'].to(self.device)[sorted_indices]
+
 			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
 			
 			accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
+
+			if self.args.opt_met:
+				valid_batch, plausible_batch, sz = self.compute_metrics(ans_distrib, valid_ans, plausible_ans)
+				samples += sz
+				valid_total += valid_batch
+				plausible_total += plausible_batch
 
 			if self.get_preds:
 				preds_list += self.extract_preds(ans_distrib.detach().cpu().numpy(), ques_ids.cpu().numpy())
 
 			acc = np.mean(accuracies)
 			print("After Batch: {}, Evaluation Accuracy: {}".format(i+1, acc))
+
+			if self.args.opt_met:
+				print('Validity: {}, Plausibility: {}'.format(float(valid_total/samples), float(plausible_total/samples)))
 
 		acc = np.mean(accuracies)
 		print("Evaluation Accuracy: {}".format(acc))
@@ -96,6 +112,30 @@ class Evaluator:
 
 		acc = np.equal(pred_ids.reshape(-1), correct_ids)
 		return acc
+
+	def compute_metrics(self, preds, valid_ans, plausible_ans):
+
+		"""
+		Compute the metric values which are being optimized
+		"""
+
+		# Get the predictions from probability distributions
+		pred_ids = np.argmax(preds.detach().cpu().numpy(), axis = -1)
+		valid_total = 0
+		plausible_total = 0
+		valid_ans = valid_ans.detach().cpu().numpy()
+		plausible_ans = plausible_ans.detach().cpu().numpy()
+
+		sz = len(pred_ids)
+		for i in range(sz):
+
+			if valid_ans[i][pred_ids[i]] == 1:
+				valid_total += 1
+
+			if plausible_ans[i][pred_ids[i]] == 1:
+				plausible_total += 1
+
+		return valid_total, plausible_total, sz
 	
 	def extract_preds(self, ans_distrib, ques_ids):
 

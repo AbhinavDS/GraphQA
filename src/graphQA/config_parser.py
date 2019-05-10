@@ -24,9 +24,11 @@ class Config(object):
 		self.dataset = 'balanced'
 		self.qa_data_path = {}
 		self.sg_data_path = {}
+		self.choices_data_path = {}
 		for mode in ['train', 'val']:
 			self.qa_data_path[mode] = os.path.join(self.expt_data_dir, '{dataset}_{mode}_data.json'.format(dataset=self.dataset, mode=mode))
 			self.sg_data_path[mode] = os.path.join(self.expt_data_dir, self.gen_mode, '{mode}_sceneGraphs.json'.format(mode=mode))
+			self.choices_data_path[mode] = os.path.join(self.expt_data_dir, '{mode}_choices.json'.format(mode=mode)) 
 		
 		# Extract the test set dir path
 		test_set_dir = ('/').join(self.expt_data_dir.split('/')[:-2] + ['test_set'])
@@ -34,6 +36,7 @@ class Config(object):
 		# Add the paths for test set
 		self.qa_data_path['test'] = os.path.join(test_set_dir, '{dataset}_{mode}_data.json'.format(dataset=self.dataset, mode='test'))
 		self.sg_data_path['test'] = os.path.join(test_set_dir, self.gen_mode, '{mode}_sceneGraphs.json'.format(mode='test'))
+		self.choices_data_path['test'] = os.path.join(self.expt_data_dir, '{mode}_choices.json'.format(mode='test'))
 
 		self.img_feat_data_path = os.path.join(self.feats_data_dir, 'gqa_spatial.h5')
 		self.img_info_path = os.path.join(self.feats_data_dir, 'gqa_spatial_merged_info.json')
@@ -91,6 +94,8 @@ def parse_args():
 	parser.add_argument('--gen_mode', type=str, default="gold", choices=["gold","pred_cls","sg_cls","sg_gen"], help="The path of directory containing scenegraphs")
 	parser.add_argument('--get_preds', default=False, action="store_true", help="Flag to indicate if the evaluator should store the predictions as well")
 	
+	parser.add_argument('--opt_met', action="store_true", default=False, help="Optimize for Metrics other than accuracy")
+	parser.add_argument('--met_loss_wt', default=0.4, type=float, help="Weightage given to metric loss during training")
 	parser.add_argument('--mode', type=str, required=True, help="Specify the mode: {train, eval}")
 	parser.add_argument('--num_epochs', default=10, type=int, help="The number of epochs for training the model")
 	parser.add_argument('--criterion', default="xce", help="The loss criterion to be used for training the model")

@@ -16,6 +16,8 @@ class GQADataset(Dataset):
 		
 		question_json_path = self.args.qa_data_path[qa_data_key]
 		scene_graph_json_path = self.args.sg_data_path[sg_data_key]
+		self.choices_data_json_path = self.args.choices_data_path[qa_data_key]
+
 		self.image_features_path = self.args.img_feat_data_path
 		image_info_json_path = self.args.img_info_path
 		vocab_json = self.args.word_vocab_path
@@ -39,13 +41,16 @@ class GQADataset(Dataset):
 		
 		with open(image_info_json_path, 'r') as img_if:
 			self.image_info = json.load(img_if)
-				
+
 		self.vocab = utils.load_vocab(vocab_json)
 
 		self.sg_vocab = utils.load_vocab(sg_vocab_json)
 		self.rel_embeddings_mat = None
 		self.obj_names_embeddings_mat = None
 		self.meta_data = utils.load_vocab(meta_data_json)
+		
+		if self.args.opt_met:
+			self.index_choices()
 
 		if args.use_glove:
 			self.word2vec_path = args.word2vec_path
@@ -87,6 +92,27 @@ class GQADataset(Dataset):
 
 		return config
 
+	def index_choices(self):
+
+		"""
+		Index the set of choices according to the answer dictionary and then delete the actual choices dictionary object
+		"""
+
+		self.choices = {}
+
+		with open(self.choices_data_json_path, 'r') as f:
+			choices_data = json.load(f)
+			for qid in self.questions_keys:
+				self.choices[qid] = {}
+
+				# Index the valid answers
+				self.choices[qid]['valid'] = preprocess_utils.encode(choices_data[qid]['valid'], self.vocab['answer_token_to_idx'], allow_unk=True)
+
+				# Index the plausible answers
+				self.choices[qid]['plausible'] = preprocess_utils.encode(choices_data[qid]['plausible'], self.vocab['answer_token_to_idx'], allow_unk=True)
+
+		print('Indexing of Choices complete')
+	
 	def load_embeddings(self, vocab, emb_dim, word2vec_path):
 
 		if not os.path.exists(word2vec_path):
@@ -195,7 +221,18 @@ class GQADataset(Dataset):
 		else:
 			ans_output = answer_encoded[0]
 		
-		return {
+		if self.args.opt_met:
+
+			valid_ans_mat = torch.zeros(len(self.vocab['answer_token_to_idx']), dtype=torch.long)
+			plausible_ans_mat = torch.zeros(len(self.vocab['answer_token_to_idx']), dtype=torch.long)
+
+			for ans_id in self.choices[key]['valid']:
+				valid_ans_mat[ans_id] = 1
+
+			for ans_id in self.choices[key]['plausible']:
+				plausible_ans_mat[ans_id] = 1
+
+		data_obj = {
 				'ques': torch.as_tensor(question_encoded, dtype=torch.long),
 				'ans': ans_output,
 				'ques_lens': ques_len,
@@ -206,3 +243,9 @@ class GQADataset(Dataset):
 				'ques_id': idx,
 				'obj_wrds': torch.as_tensor(obj_wrds_mat, dtype=torch.long)
 			}
+
+		if self.args.opt_met:
+			data_obj['valid_ans'] = valid_ans_mat
+			data_obj['plausible_ans'] = plausible_ans_mat
+
+		return data_obj

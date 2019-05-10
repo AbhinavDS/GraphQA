@@ -117,14 +117,23 @@ class Trainer:
 				num_obj = batch['num_objs'].to(self.device)[sorted_indices] 
 				ans_output = batch['ans'].to(self.device)[sorted_indices]
 				obj_wrds = batch['obj_wrds'].to(self.device)[sorted_indices]
+				
+				if self.args.opt_met:
+					valid_ans = batch['valid_ans'].to(self.device)[sorted_indices]
+					plausible_ans = batch['plausible_ans'].to(self.device)[sorted_indices]
 
 				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
 				
 				#print(ans_distrib.size(), ans_output.size())
-				if self.args.criterion == "bce" and self.args.use_bua or self.args.use_bua2:
+				if self.args.criterion == "bce" or self.args.use_bua or self.args.use_bua2:
 					batch_loss = self.instance_bce_with_logits(ans_distrib, ans_output)
 				else:
 					batch_loss = self.criterion(ans_distrib, ans_output)
+
+				if self.args.opt_met:
+					metric_loss = self.instance_bce_with_logits(ans_distrib, valid_ans)
+					metric_loss += self.instance_bce_with_logits(ans_distrib, plausible_ans)
+					batch_loss = (1.0 - self.args.met_loss_wt) * batch_loss + self.args.met_loss_wt * metric_loss
 
 				batch_loss.backward()
 
@@ -169,6 +178,9 @@ class Trainer:
 		loss = 0.0
 		accuracies = []
 
+		if self.args.opt_met:
+			valid_total, plausible_total, samples = 0.0, 0.0, 0
+
 		self.model.eval()
 		for i, batch in enumerate(self.val_loader):
 
@@ -185,10 +197,31 @@ class Trainer:
 			obj_wrds = batch['obj_wrds'].to(self.device)[sorted_indices]
 			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
 
-			batch_loss = self.criterion(ans_distrib, ans_output)
+			if self.args.opt_met:
+				valid_ans = batch['valid_ans'].to(self.device)[sorted_indices]
+				plausible_ans = batch['plausible_ans'].to(self.device)[sorted_indices]
+
+			if self.args.criterion == "bce" or self.args.use_bua or self.args.use_bua2:
+				batch_loss = self.instance_bce_with_logits(ans_distrib, ans_output)
+			else:
+				batch_loss = self.criterion(ans_distrib, ans_output)
+
+			if self.args.opt_met:
+				metric_loss = self.instance_bce_with_logits(ans_distrib, valid_ans)
+				metric_loss += self.instance_bce_with_logits(ans_distrib, plausible_ans)
+				batch_loss = (1.0 - self.args.met_loss_wt) * batch_loss + self.args.met_loss_wt * metric_loss
+
+				valid_batch, plausible_batch, sz = self.compute_metrics(ans_distrib, valid_ans, plausible_ans)
+				samples += sz
+				valid_total += valid_batch
+				plausible_total += plausible_batch
+			
 			loss += batch_loss.data
 
 			accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
+
+		if self.args.opt_met:
+			print('Validity: {}, Plausibility: {}'.format(float(valid_total/samples), float(plausible_total/samples)))
 
 		return loss, np.mean(accuracies)
 
@@ -211,6 +244,30 @@ class Trainer:
 		acc = np.equal(pred_ids.reshape(-1), correct_ids)
 		return acc
 	
+	def compute_metrics(self, preds, valid_ans, plausible_ans):
+
+		"""
+		Compute the metric values which are being optimized
+		"""
+
+		# Get the predictions from probability distributions
+		pred_ids = np.argmax(preds.detach().cpu().numpy(), axis = -1)
+		valid_total = 0
+		plausible_total = 0
+		valid_ans = valid_ans.detach().cpu().numpy()
+		plausible_ans = plausible_ans.detach().cpu().numpy()
+
+		sz = len(pred_ids)
+		for i in range(sz):
+
+			if valid_ans[i][pred_ids[i]] == 1:
+				valid_total += 1
+
+			if plausible_ans[i][pred_ids[i]] == 1:
+				plausible_total += 1
+
+		return valid_total, plausible_total, sz
+
 	def check_restart_conditions(self):
 
 		# Check for the status file corresponding to the model
@@ -248,6 +305,9 @@ class Trainer:
 			self.criterion = nn.CrossEntropyLoss()
 		else:
 			raise("Invalid loss criterion")
+
+		if self.opt_met:
+			self.metric_criterion = nn.BCEWithLogitsLoss()
 
 	def log_stats(self, train_loss, val_loss, train_acc, val_acc, epoch):
 		
