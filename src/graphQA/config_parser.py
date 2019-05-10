@@ -54,6 +54,11 @@ class Config(object):
 		self.create_dir(self.log_dir)
 		self.create_dir(self.ckpt_dir)
 
+		# Enforcing a particular combination of flags for certain configurations
+		if self.use_rl:
+			self.opt_met = True
+			self.optim = 'adam'
+
 	def set_config(self, config):
 		for key in config:
 			setattr(self, key, config[key])
@@ -99,6 +104,7 @@ def parse_args():
 	parser.add_argument('--mode', type=str, required=True, help="Specify the mode: {train, eval}")
 	parser.add_argument('--num_epochs', default=10, type=int, help="The number of epochs for training the model")
 	parser.add_argument('--criterion', default="xce", help="The loss criterion to be used for training the model")
+	parser.add_argument('--optim', default="adamax", help="Optimizer to be used for training the model")
 	parser.add_argument('--learning_rate_decay_every', type=int, default=100, help="The schedule after which the learning is decayed by half")
 	parser.add_argument('--lr', default=1e-3, type=float, help="The learning rate for training the architecture")
 	parser.add_argument('--bsz', default=32, type=int, help="Batch Size")
@@ -149,5 +155,8 @@ def parse_args():
 	parser.add_argument('--n_attn_layers', default=2, type=int, help="Number of attentions in the stack of SAN")
 	parser.add_argument('--san_dim_in', default=512, type=int, help="Dimension of the Input tensors to SAN")
 	parser.add_argument('--san_dim_mid', default=256, type=int, help="Dimension of the Intermediate tensors in SAN")
+
+	# Options for RL
+	parser.add_argument('--use_rl', action="store_true", default=False, help="Use RL training method")
 
 	return parser.parse_args(namespace = args)

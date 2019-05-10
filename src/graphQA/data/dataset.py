@@ -223,8 +223,8 @@ class GQADataset(Dataset):
 		
 		if self.args.opt_met:
 
-			valid_ans_mat = torch.zeros(len(self.vocab['answer_token_to_idx']), dtype=torch.long)
-			plausible_ans_mat = torch.zeros(len(self.vocab['answer_token_to_idx']), dtype=torch.long)
+			valid_ans_mat = torch.zeros(len(self.vocab['answer_token_to_idx']), dtype=torch.float32)
+			plausible_ans_mat = torch.zeros(len(self.vocab['answer_token_to_idx']), dtype=torch.float32)
 
 			for ans_id in self.choices[key]['valid']:
 				valid_ans_mat[ans_id] = 1

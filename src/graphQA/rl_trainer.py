@@ -1,5 +1,5 @@
 """
-Module that controls the training of the graphQA module
+Module that controls the training of the graphQA module using Reinforcement Learning
 """
 
 import os
@@ -11,9 +11,10 @@ from tensorboardX import SummaryWriter
 
 from .models.bottom_up_gcn import BottomUpGCN
 from .models.san import SAN
-from .models.git_bua import BaseModel as BottomUp
-from .models.git_bua2 import BaseModel2 as BottomUp2
+from .models.learner import Learner
 from torch.utils.data import DataLoader
+from torch.distributions import Categorical
+import torch.nn.functional as F
 
 class Trainer:
 
@@ -29,10 +30,6 @@ class Trainer:
 		# Set the Model variable to the class that needs to be used
 		if args.use_san:
 			Model = SAN
-		elif args.use_bua:
-			Model = BottomUp
-		elif args.use_bua2:
-			Model = BottomUp2
 		else:
 			Model = BottomUpGCN
 
@@ -48,14 +45,12 @@ class Trainer:
 				self.rel_embeddings_mat = self.train_dataset.rel_embeddings_mat
 				self.obj_names_embeddings_mat = self.train_dataset.obj_names_embeddings_mat
 		
-		self.model = Model(args, word2vec=self.embeddings_mat, rel_word2vec=self.rel_embeddings_mat, obj_name_word2vec=self.obj_names_embeddings_mat)
-
+		self.model = Learner(Model, args, word2vec=self.embeddings_mat, rel_word2vec=self.rel_embeddings_mat, obj_name_word2vec=self.obj_names_embeddings_mat)
+		
 		self.device = self.args.device
 
-		# Can be changed to support different optimizers
-		# self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args.lr)
-		self.optimizer = torch.optim.Adamax(self.model.parameters())
 		self.set_criterion()
+		self.set_optimizer()
 		self.lr = self.args.lr
 		
 		self.train_loader = DataLoader(dataset = self.train_dataset, batch_size=self.args.bsz, shuffle=True, num_workers=4)
@@ -66,12 +61,20 @@ class Trainer:
 		if self.log:
 			self.writer = SummaryWriter(args.log_dir)
 
+	def set_optimizer(self):
+
+		if self.args.optim == 'adam':
+			self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args.lr)
+		elif self.args.optim == 'adamax':
+			self.optimizer = torch.optim.Adamax(self.model.parameters())
+		else:
+			raise('Specify Correct Optimizer')
+	
 	def instance_bce_with_logits(self, logits, labels):
 		assert logits.dim() == 2
 		loss = nn.functional.binary_cross_entropy_with_logits(logits, labels)
 		loss *= labels.size(1)
 		return loss
-
 
 	def compute_score_with_logits(self, logits, labels):
 		logits = torch.max(logits, 1)[1].data # argmax
@@ -97,6 +100,7 @@ class Trainer:
 		for epoch in range(self.resume_from_epoch, self.num_epochs):
 
 			lr = self.adjust_lr(epoch)
+			
 			self.model.train()
 
 			loss = 0.0
@@ -117,51 +121,37 @@ class Trainer:
 				num_obj = batch['num_objs'].to(self.device)[sorted_indices] 
 				ans_output = batch['ans'].to(self.device)[sorted_indices]
 				obj_wrds = batch['obj_wrds'].to(self.device)[sorted_indices]
-				
-				if self.args.opt_met:
-					valid_ans = batch['valid_ans'].to(self.device)[sorted_indices]
-					plausible_ans = batch['plausible_ans'].to(self.device)[sorted_indices]
+				valid_ans = batch['valid_ans'][sorted_indices].to(self.device)
+				plausible_ans = batch['plausible_ans'][sorted_indices].to(self.device)
 
-				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
+				policy_distrib, value, ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
 				
-				#print(ans_distrib.size(), ans_output.size())
-				if self.args.criterion == "bce" or self.args.use_bua or self.args.use_bua2:
-					batch_loss = self.instance_bce_with_logits(ans_distrib, ans_output)
-				else:
-					batch_loss = self.criterion(ans_distrib, ans_output)
+				action, action_log_probs = self.select_action(policy_distrib)
 
-				if self.args.opt_met:
-					metric_loss = self.instance_bce_with_logits(ans_distrib, valid_ans)
-					metric_loss += self.instance_bce_with_logits(ans_distrib, plausible_ans)
-					batch_loss = (1.0 - self.args.met_loss_wt) * batch_loss + self.args.met_loss_wt * metric_loss
+				rewards = self.compute_reward(action, valid_ans, plausible_ans)
+
+				advantage = rewards - value
+				actor_loss = -(action_log_probs * advantage)
+				critic_loss = F.smooth_l1_loss(value, rewards)
+				xce_loss = self.criterion(ans_distrib, ans_output)
+				batch_loss = (actor_loss + critic_loss).mean() + xce_loss
 
 				batch_loss.backward()
 
 				nn.utils.clip_grad_norm_(self.model.parameters(), 0.25)
 				
 				self.optimizer.step()
-				loss += batch_loss.data
+				
 				train_accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
 
 				if i % self.args.display_every == 0:
-					print('Train Epoch: {}, Iteration: {}, Loss: {}'.format(epoch, i, batch_loss))
+					print('Train Epoch: {}, Iteration: {}, Rewards: {}'.format(epoch, i, rewards.mean()))
 
 			train_acc = np.mean(train_accuracies)
-			
-			# ques_lens = None
-			# sorted_indices = None
-			# ques_lens = None
-			# img_feats = None
-			# ques = None
-			# objs = None
-			# adj_mat = None
-			# num_obj = None
-			# ans_output = None
-			# ans_distrib = None
-			del ans_output
-			val_loss, val_acc = self.eval()
 
-			self.log_stats(loss, val_loss, train_acc, val_acc, epoch)
+			val_reward, val_acc = self.eval()
+
+			self.log_stats(rewards.mean(), val_reward, train_acc, val_acc, epoch)
 			print('Valid Epoch: {}, Val Acc: {}'.format(epoch, val_acc))
 			if val_acc > self.best_val_acc:
 				print('Saving new best model. Better than previous accuracy: {}'.format(self.best_val_acc))
@@ -173,6 +163,30 @@ class Trainer:
 			self.write_status(epoch, self.best_val_acc)
 			
 	
+	def select_action(self, policy_distrib):
+
+		sampler = Categorical(policy_distrib)
+		action = sampler.sample()
+
+		return action, sampler.log_prob(action)
+
+	def compute_reward(self, action, valid_ans, plausible_ans):
+
+		"""
+		Assigns the reward for each action in the batch based on the metrics to be optimized for
+		"""
+
+		batch_sz = action.size(0)
+		rewards = torch.zeros(batch_sz, dtype=torch.float32).to(self.device)
+		valid_ans = valid_ans.detach().cpu().numpy()
+		plausible_ans = plausible_ans.detach().cpu().numpy()
+
+		for i in range(batch_sz):
+			act = int(action[i])
+			rewards[i] = 0.3 * valid_ans[i][act] + 0.7 * plausible_ans[i][act]
+
+		return rewards
+
 	def eval(self):
 
 		loss = 0.0
@@ -197,33 +211,29 @@ class Trainer:
 			obj_wrds = batch['obj_wrds'].to(self.device)[sorted_indices]
 			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
 
-			if self.args.opt_met:
-				valid_ans = batch['valid_ans'].to(self.device)[sorted_indices]
-				plausible_ans = batch['plausible_ans'].to(self.device)[sorted_indices]
+			valid_ans = batch['valid_ans'][sorted_indices].to(self.device)
+			plausible_ans = batch['plausible_ans'][sorted_indices].to(self.device)
 
-			if self.args.criterion == "bce" or self.args.use_bua or self.args.use_bua2:
-				batch_loss = self.instance_bce_with_logits(ans_distrib, ans_output)
-			else:
-				batch_loss = self.criterion(ans_distrib, ans_output)
-
-			if self.args.opt_met:
-				metric_loss = self.instance_bce_with_logits(ans_distrib, valid_ans)
-				metric_loss += self.instance_bce_with_logits(ans_distrib, plausible_ans)
-				batch_loss = (1.0 - self.args.met_loss_wt) * batch_loss + self.args.met_loss_wt * metric_loss
-
-				valid_batch, plausible_batch, sz = self.compute_metrics(ans_distrib, valid_ans, plausible_ans)
-				samples += sz
-				valid_total += valid_batch
-				plausible_total += plausible_batch
+			policy_distrib, value, ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
 			
-			loss += batch_loss.data
+			action = policy_distrib.argmax(dim=-1, keepdim=False)
 
+			rewards = self.compute_reward(action, valid_ans, plausible_ans)
+
+			advantage = rewards - value
+			xce_loss = self.criterion(ans_distrib, ans_output)
+			
+			valid_batch, plausible_batch, sz = self.compute_metrics(ans_distrib, valid_ans, plausible_ans)
+			samples += sz
+			valid_total += valid_batch
+			plausible_total += plausible_batch
+			
 			accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
 
 		if self.args.opt_met:
 			print('Validity: {}, Plausibility: {}'.format(float(valid_total/samples), float(plausible_total/samples)))
 
-		return loss, np.mean(accuracies)
+		return rewards.mean(), np.mean(accuracies)
 
 	def get_accuracy(self, preds, correct):
 
@@ -233,10 +243,7 @@ class Trainer:
 		
 		pred_ids = np.argmax(preds.detach().cpu().numpy(), axis = -1)
 
-		if self.args.criterion == "bce":
-			# correct is in form of one hot vector
-			correct_ids = np.argmax(correct.cpu().numpy(), axis = -1)
-		elif self.args.criterion == "xce":
+		if self.args.criterion == "xce":
 			correct_ids = correct.cpu().numpy()
 		else:
 			raise("Incorrect Loss function to compute accuracy for")
@@ -299,23 +306,21 @@ class Trainer:
 
 	def set_criterion(self):
 
-		if self.args.criterion == "bce":
-			self.criterion = nn.BCEWithLogitsLoss()
-		elif self.args.criterion == "xce":
+		if self.args.criterion == "xce":
 			self.criterion = nn.CrossEntropyLoss()
 		else:
 			raise("Invalid loss criterion")
 
-	def log_stats(self, train_loss, val_loss, train_acc, val_acc, epoch):
+	def log_stats(self, train_reward, val_reward, train_acc, val_acc, epoch):
 		
 		"""
 		Log the stats of the current
 		"""
 
 		if self.log:
-			self.writer.add_scalar('train/loss', train_loss, epoch)
+			self.writer.add_scalar('train/reward', train_reward, epoch)
 			self.writer.add_scalar('train/acc', train_acc, epoch)
-			self.writer.add_scalar('val/loss', val_loss, epoch)
+			self.writer.add_scalar('val/reward', val_reward, epoch)
 			self.writer.add_scalar('val/acc', val_acc, epoch)
 
 	def load_ckpt(self):
