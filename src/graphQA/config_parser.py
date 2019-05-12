@@ -151,9 +151,9 @@ def parse_args():
 	parser.add_argument('--mac_dim', default=512, type=int, help="The default dimension of the LSTM cells in the MAC network")
 
 	# Options for extra metric optimizations
-	parser.add_argument('--lambda_ground', type=float, default=1, help="Weight for Grounding Loss")
-	parser.add_argument('--lambda_valid', type=float, default=1, help="Weight for Validity Loss")
-	parser.add_argument('--lambda_plaus', type=float, default=1, help="Weight for Plausibility Loss")
+	parser.add_argument('--lambda_ground', type=float, default=20, help="Weight for Grounding Loss")
+	parser.add_argument('--lambda_valid', type=float, default=0.4, help="Weight for Validity Loss")
+	parser.add_argument('--lambda_plaus', type=float, default=0.2, help="Weight for Plausibility Loss")
 
 	# Options for SAN
 	parser.add_argument('--use_san', action="store_true", default=False, help="Use Stacked Attention Network")

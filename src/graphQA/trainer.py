@@ -56,6 +56,11 @@ class Trainer:
 		# self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args.lr)
 		self.optimizer = torch.optim.Adamax(self.model.parameters())
 		self.set_criterion()
+
+		self.lambda_valid = args.lambda_valid
+		self.lambda_plaus = args.lambda_plaus
+		self.lambda_ground = args.lambda_ground
+		self.ground_loss = nn.MSELoss()
 		self.lr = self.args.lr
 		
 		self.train_loader = DataLoader(dataset = self.train_dataset, batch_size=self.args.bsz, shuffle=True, num_workers=4)
@@ -114,26 +119,32 @@ class Trainer:
 				ques = batch['ques'].to(self.device)[sorted_indices]
 				objs = batch['obj_bboxes'].to(self.device)[sorted_indices]
 				adj_mat = batch['A'].to(self.device)[sorted_indices]
-				num_obj = batch['num_objs'].to(self.device)[sorted_indices] 
+				num_objs = batch['num_objs'].to(self.device)[sorted_indices] 
 				ans_output = batch['ans'].to(self.device)[sorted_indices]
 				obj_wrds = batch['obj_wrds'].to(self.device)[sorted_indices]
+				obj_region_mask = batch['obj_region_mask'].to(self.device)[sorted_indices]
+				attn_mask = batch['attn_mask'].to(self.device)[sorted_indices]
 				
 				if self.args.opt_met:
 					valid_ans = batch['valid_ans'].to(self.device)[sorted_indices]
 					plausible_ans = batch['plausible_ans'].to(self.device)[sorted_indices]
 
-				ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
-				
+				ans_distrib, pred_attn_mask, _ = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_objs, obj_wrds, 	obj_region_mask)
+				pred_attn_mask[attn_mask <= 0] = 0
+
 				#print(ans_distrib.size(), ans_output.size())
 				if self.args.criterion == "bce" or self.args.use_bua or self.args.use_bua2:
 					batch_loss = self.instance_bce_with_logits(ans_distrib, ans_output)
 				else:
 					batch_loss = self.criterion(ans_distrib, ans_output)
 
+				accur_loss = (float)(batch_loss.data.detach().cpu().numpy())
+
 				if self.args.opt_met:
-					metric_loss = self.instance_bce_with_logits(ans_distrib, valid_ans)
-					metric_loss += self.instance_bce_with_logits(ans_distrib, plausible_ans)
-					batch_loss = (1.0 - self.args.met_loss_wt) * batch_loss + self.args.met_loss_wt * metric_loss
+					valid_loss = self.lambda_valid * self.instance_bce_with_logits(ans_distrib, valid_ans)
+					plaus_loss = self.lambda_plaus * self.instance_bce_with_logits(ans_distrib, plausible_ans)
+					ground_loss = self.lambda_ground * self.ground_loss(pred_attn_mask, attn_mask)
+					batch_loss += (valid_loss + plaus_loss + ground_loss)
 
 				batch_loss.backward()
 
@@ -144,7 +155,10 @@ class Trainer:
 				train_accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
 
 				if i % self.args.display_every == 0:
-					print('Train Epoch: {}, Iteration: {}, Loss: {}'.format(epoch, i, batch_loss))
+					if self.args.opt_met:
+						print('Train Epoch: {0:}, Iteration: {1:}, Total Loss: {2:.3f}, AL: {3:.3f}, VL: {4:.3f}, PL: {5:.3f}, GL: {6:.3f}'.format(epoch, i, batch_loss.data, accur_loss, valid_loss.data, plaus_loss.data, ground_loss.data))
+					else:
+						print('Train Epoch: {}, Iteration: {}, Loss: {}'.format(epoch, i, batch_loss.data))
 
 			train_acc = np.mean(train_accuracies)
 			
@@ -155,7 +169,7 @@ class Trainer:
 			# ques = None
 			# objs = None
 			# adj_mat = None
-			# num_obj = None
+			# num_objs = None
 			# ans_output = None
 			# ans_distrib = None
 			del ans_output
@@ -192,10 +206,14 @@ class Trainer:
 			ques = batch['ques'].to(self.device)[sorted_indices]
 			objs = batch['obj_bboxes'].to(self.device)[sorted_indices]
 			adj_mat = batch['A'].to(self.device)[sorted_indices]
-			num_obj = batch['num_objs'].to(self.device)[sorted_indices] 
+			num_objs = batch['num_objs'].to(self.device)[sorted_indices] 
 			ans_output = batch['ans'].to(self.device)[sorted_indices]
 			obj_wrds = batch['obj_wrds'].to(self.device)[sorted_indices]
-			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
+			obj_region_mask = batch['obj_region_mask'].to(self.device)[sorted_indices]
+			attn_mask = batch['attn_mask'].to(self.device)[sorted_indices]
+
+			ans_distrib, pred_attn_mask, _ = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_objs, obj_wrds, obj_region_mask)
+			pred_attn_mask[attn_mask <= 0] = 0
 
 			if self.args.opt_met:
 				valid_ans = batch['valid_ans'].to(self.device)[sorted_indices]
@@ -207,9 +225,10 @@ class Trainer:
 				batch_loss = self.criterion(ans_distrib, ans_output)
 
 			if self.args.opt_met:
-				metric_loss = self.instance_bce_with_logits(ans_distrib, valid_ans)
-				metric_loss += self.instance_bce_with_logits(ans_distrib, plausible_ans)
-				batch_loss = (1.0 - self.args.met_loss_wt) * batch_loss + self.args.met_loss_wt * metric_loss
+				valid_loss = self.lambda_valid * self.instance_bce_with_logits(ans_distrib, valid_ans)
+				plaus_loss = self.lambda_plaus *self.instance_bce_with_logits(ans_distrib, plausible_ans)
+				ground_loss = self.lambda_ground *self.ground_loss(pred_attn_mask, attn_mask)
+				batch_loss += (valid_loss + plaus_loss + ground_loss)
 
 				valid_batch, plausible_batch, sz = self.compute_metrics(ans_distrib, valid_ans, plausible_ans)
 				samples += sz

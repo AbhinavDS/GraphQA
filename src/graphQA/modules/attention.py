@@ -40,20 +40,21 @@ class TopDownAttention(nn.Module):
 		else:
 			self.attn_gate = NonLinearity(args.n_img_feats + args.n_ques_emb, args.n_attn, args.nl, args.drop_prob)
 
-	def forward(self, obj_feats, ques_emb, num_obj, img_feats=None):
+	def forward(self, obj_feats, ques_emb, num_obj, obj_region_mask, img_feats=None):
 
 		"""
 		@param obj_feats: Tensor of Image/Object Features to be attended on. Size: (B*O*F1)
 		@param ques_emb: The embedding of the question which will be used to attend on the img_feats. Size: (B*F2)
 		@param num_obj: Tensor for number of objects in each image for creating a mask. Size: (B)
+		@param obj_region_mask: Tensor for each object in each image for creating a image mask. Size: (Bxattn_heightxattn_width)
 		@return: A single image feature attended over all objects. Size: (B*F1)
 		"""
 		batch_sz = ques_emb.size(0)
 		
-		obj_mask = torch.zeros(batch_sz, self.max_num_objs).type(torch.ByteTensor).to(self.device)
+		num_obj_mask = torch.zeros(batch_sz, self.max_num_objs).type(torch.ByteTensor).to(self.device)
 
 		for i in range(self.max_num_objs):
-			obj_mask[:, i] = (i >= num_obj)
+			num_obj_mask[:, i] = (i >= num_obj)
 		
 		if self.use_img_feats:
 			
@@ -68,12 +69,14 @@ class TopDownAttention(nn.Module):
 
 		attn_layer_out = self.attn_layer(gated_attn).squeeze(2)
 		
-		attn_layer_out = attn_layer_out.data.masked_fill_(obj_mask, -float("inf"))
+		attn_layer_out = attn_layer_out.data.masked_fill_(num_obj_mask, -float("inf"))
 		attn_wt = self.attn_softmax(attn_layer_out)
 
 		attn_img_feats = torch.bmm(attn_wt.unsqueeze(1), obj_feats).squeeze(1)
 
-		return attn_img_feats
+		pred_attn_mask = torch.bmm(attn_wt.unsqueeze(1), obj_region_mask.view(batch_sz, self.max_num_objs, -1)).squeeze(1).view(batch_sz, obj_region_mask.size(-2), obj_region_mask.size(-1))
+
+		return attn_img_feats, pred_attn_mask, attn_wt
 
 
 
