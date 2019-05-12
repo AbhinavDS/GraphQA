@@ -24,9 +24,11 @@ class Config(object):
 		self.dataset = 'balanced'
 		self.qa_data_path = {}
 		self.sg_data_path = {}
+		self.choices_data_path = {}
 		for mode in ['train', 'val']:
 			self.qa_data_path[mode] = os.path.join(self.expt_data_dir, '{dataset}_{mode}_data.json'.format(dataset=self.dataset, mode=mode))
 			self.sg_data_path[mode] = os.path.join(self.expt_data_dir, self.gen_mode, '{mode}_sceneGraphs.json'.format(mode=mode))
+			self.choices_data_path[mode] = os.path.join(self.expt_data_dir, '{mode}_choices.json'.format(mode=mode)) 
 		
 		# Extract the test set dir path
 		test_set_dir = ('/').join(self.expt_data_dir.split('/')[:-2] + ['test_set'])
@@ -34,6 +36,7 @@ class Config(object):
 		# Add the paths for test set
 		self.qa_data_path['test'] = os.path.join(test_set_dir, '{dataset}_{mode}_data.json'.format(dataset=self.dataset, mode='test'))
 		self.sg_data_path['test'] = os.path.join(test_set_dir, self.gen_mode, '{mode}_sceneGraphs.json'.format(mode='test'))
+		self.choices_data_path['test'] = os.path.join(self.expt_data_dir, '{mode}_choices.json'.format(mode='test'))
 
 		self.img_feat_data_path = os.path.join(self.feats_data_dir, 'gqa_spatial.h5')
 		self.img_info_path = os.path.join(self.feats_data_dir, 'gqa_spatial_merged_info.json')
@@ -50,6 +53,11 @@ class Config(object):
 		self.ckpt_dir = os.path.join(self.expt_res_dir, 'ckpt')
 		self.create_dir(self.log_dir)
 		self.create_dir(self.ckpt_dir)
+
+		# Enforcing a particular combination of flags for certain configurations
+		if self.use_rl:
+			self.opt_met = True
+			self.optim = 'adam'
 
 	def set_config(self, config):
 		for key in config:
@@ -91,9 +99,12 @@ def parse_args():
 	parser.add_argument('--gen_mode', type=str, default="gold", choices=["gold","pred_cls","sg_cls","sg_gen"], help="The path of directory containing scenegraphs")
 	parser.add_argument('--get_preds', default=False, action="store_true", help="Flag to indicate if the evaluator should store the predictions as well")
 	
+	parser.add_argument('--opt_met', action="store_true", default=False, help="Optimize for Metrics other than accuracy")
+	parser.add_argument('--met_loss_wt', default=0.4, type=float, help="Weightage given to metric loss during training")
 	parser.add_argument('--mode', type=str, required=True, help="Specify the mode: {train, eval}")
 	parser.add_argument('--num_epochs', default=10, type=int, help="The number of epochs for training the model")
 	parser.add_argument('--criterion', default="xce", help="The loss criterion to be used for training the model")
+	parser.add_argument('--optim', default="adamax", help="Optimizer to be used for training the model")
 	parser.add_argument('--learning_rate_decay_every', type=int, default=100, help="The schedule after which the learning is decayed by half")
 	parser.add_argument('--lr', default=1e-3, type=float, help="The learning rate for training the architecture")
 	parser.add_argument('--bsz', default=32, type=int, help="Batch Size")
@@ -141,5 +152,16 @@ def parse_args():
 
 	# Options for extra metric optimizations
 	parser.add_argument('--lambda_ground', type=float, default=1, help="Weight for Grounding Loss")
-	
+	parser.add_argument('--lambda_valid', type=float, default=1, help="Weight for Validity Loss")
+	parser.add_argument('--lambda_plaus', type=float, default=1, help="Weight for Plausibility Loss")
+
+	# Options for SAN
+	parser.add_argument('--use_san', action="store_true", default=False, help="Use Stacked Attention Network")
+	parser.add_argument('--n_attn_layers', default=2, type=int, help="Number of attentions in the stack of SAN")
+	parser.add_argument('--san_dim_in', default=512, type=int, help="Dimension of the Input tensors to SAN")
+	parser.add_argument('--san_dim_mid', default=256, type=int, help="Dimension of the Intermediate tensors in SAN")
+
+	# Options for RL
+	parser.add_argument('--use_rl', action="store_true", default=False, help="Use RL training method")
+
 	return parser.parse_args(namespace = args)

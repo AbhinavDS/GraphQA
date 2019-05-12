@@ -5,8 +5,10 @@ Main module that controls the complete graph QA pipeline
 from .config_parser import parse_args
 from .trainer import Trainer
 from .mac_trainer import Trainer as MacTrainer
+from .rl_trainer import Trainer as RLTrainer
 from.evaluator import Evaluator
 from .mac_evaluator import Evaluator as MacEvaluator
+from .rl_evaluator import Evaluator as RLEvaluator
 from .data.dataset import GQADataset
 
 if __name__ == "__main__":
@@ -23,6 +25,8 @@ if __name__ == "__main__":
 
 		if args.use_mac:
 			trainer = MacTrainer(args, train_dataset, val_dataset)
+		elif args.use_rl:
+			trainer = RLTrainer(args, train_dataset, val_dataset)
 		else:
 			trainer = Trainer(args, train_dataset, val_dataset)
 		
@@ -34,6 +38,8 @@ if __name__ == "__main__":
 		
 		if args.use_mac:
 			evaluator = MacEvaluator(args, val_dataset)
+		elif args.use_rl:
+			evaluator = RLEvaluator(args, val_dataset)
 		else:
 			evaluator = Evaluator(args, val_dataset)
 		

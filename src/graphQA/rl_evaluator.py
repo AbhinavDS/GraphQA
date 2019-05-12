@@ -1,5 +1,5 @@
 """
-Module that evaluates the trained model on the given test set
+Module that controls the training of the graphQA module using Reinforcement Learning
 """
 
 import os
@@ -11,7 +11,10 @@ from tensorboardX import SummaryWriter
 
 from .models.bottom_up_gcn import BottomUpGCN
 from .models.san import SAN
+from .models.learner import Learner
 from torch.utils.data import DataLoader
+from torch.distributions import Categorical
+import torch.nn.functional as F
 
 class Evaluator:
 
@@ -20,16 +23,17 @@ class Evaluator:
 		self.args = args
 		self.num_epochs = args.num_epochs
 		self.dataset = dataset
-
+		
 		# Set the Model variable to the class that needs to be used
 		if args.use_san:
 			Model = SAN
 		else:
 			Model = BottomUpGCN
 
-		self.model = Model(args)
+		self.model = Learner(Model, args)
+		self.device = self.args.device
 		self.load_ckpt()
-		self.device = self.args.device		
+		
 		self.data_loader = DataLoader(dataset=self.dataset, batch_size=self.args.bsz, num_workers=4)
 
 		self.get_preds = self.args.get_preds
@@ -38,8 +42,6 @@ class Evaluator:
 
 		print('Initiating Evaluation')
 		self.model.to(self.device)
-				
-		self.model.eval()
 
 		loss = 0.0
 		accuracies = []
@@ -52,6 +54,7 @@ class Evaluator:
 		if self.args.opt_met:
 			valid_total, plausible_total, samples = 0.0, 0.0, 0
 
+		self.model.eval()
 		for i, batch in enumerate(self.data_loader):
 
 			# Unpack the items from the batch tensor
@@ -66,20 +69,20 @@ class Evaluator:
 			ans_output = batch['ans'].to(self.device)[sorted_indices]
 			ques_ids = batch['ques_id'].to(self.device)[sorted_indices]
 			obj_wrds = batch['obj_wrds'].to(self.device)[sorted_indices]
-
-			if self.args.opt_met:
-				valid_ans = batch['valid_ans'].to(self.device)[sorted_indices]
-				plausible_ans = batch['plausible_ans'].to(self.device)[sorted_indices]
-
+			valid_ans = batch['valid_ans'][sorted_indices].to(self.device)
+			plausible_ans = batch['plausible_ans'][sorted_indices].to(self.device)
+			
 			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
+
+
+			policy_distrib, value, ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
+			
+			valid_batch, plausible_batch, sz = self.compute_metrics(ans_distrib, valid_ans, plausible_ans)
+			samples += sz
+			valid_total += valid_batch
+			plausible_total += plausible_batch
 			
 			accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
-
-			if self.args.opt_met:
-				valid_batch, plausible_batch, sz = self.compute_metrics(ans_distrib, valid_ans, plausible_ans)
-				samples += sz
-				valid_total += valid_batch
-				plausible_total += plausible_batch
 
 			if self.get_preds:
 				preds_list += self.extract_preds(ans_distrib.detach().cpu().numpy(), ques_ids.cpu().numpy())
@@ -87,13 +90,19 @@ class Evaluator:
 			acc = np.mean(accuracies)
 			print("After Batch: {}, Evaluation Accuracy: {}".format(i+1, acc))
 
-			if self.args.opt_met:
-				print('Validity: {}, Plausibility: {}'.format(float(valid_total/samples), float(plausible_total/samples)))
+			print('Validity: {}, Plausibility: {}'.format(float(valid_total/samples), float(plausible_total/samples)))
 
 		acc = np.mean(accuracies)
 		print("Evaluation Accuracy: {}".format(acc))
 		self.write_stats(acc, preds_list)
-			
+
+		if self.args.opt_met:
+			print('Validity: {}, Plausibility: {}'.format(float(valid_total/samples), float(plausible_total/samples)))
+
+		acc = np.mean(accuracies)
+		print("Evaluation Accuracy: {}".format(acc))
+		self.write_stats(acc, preds_list)
+
 	def get_accuracy(self, preds, correct):
 
 		"""
@@ -102,17 +111,14 @@ class Evaluator:
 		
 		pred_ids = np.argmax(preds.detach().cpu().numpy(), axis = -1)
 
-		if self.args.criterion == "bce":
-			# correct is in form of one hot vector
-			correct_ids = np.argmax(correct.cpu().numpy(), axis = -1)
-		elif self.args.criterion == "xce":
+		if self.args.criterion == "xce":
 			correct_ids = correct.cpu().numpy()
 		else:
 			raise("Incorrect Loss function to compute accuracy for")
 
 		acc = np.equal(pred_ids.reshape(-1), correct_ids)
 		return acc
-
+	
 	def compute_metrics(self, preds, valid_ans, plausible_ans):
 
 		"""
@@ -136,7 +142,20 @@ class Evaluator:
 				plausible_total += 1
 
 		return valid_total, plausible_total, sz
-	
+
+	def load_ckpt(self):
+		"""
+		Load the model checkpoint from the provided path
+		"""
+
+		# TODO: Maybe load args as well from the checkpoint
+
+		model_name = self.model.__class__.__name__
+		ckpt_path = os.path.join(self.args.ckpt_dir, '{}.ckpt'.format(model_name))
+
+		ckpt = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
+		self.model.load_state_dict(ckpt['state_dict'])
+
 	def extract_preds(self, ans_distrib, ques_ids):
 
 		preds_list = []
@@ -166,18 +185,3 @@ class Evaluator:
 		if self.get_preds:
 			with open(os.path.join(self.args.expt_res_dir, 'test_preds.json'), 'w') as f:
 				json.dump(preds_list, f)
-
-	def load_ckpt(self):
-		"""
-		Load the model checkpoint from the provided path
-		"""
-
-		# TODO: Maybe load args as well from the checkpoint
-
-		model_name = self.model.__class__.__name__
-		ckpt_path = os.path.join(self.args.ckpt_dir, '{}_best.ckpt'.format(model_name))
-		if not os.path.exists(ckpt_path):
-			print ("!!!Best model path not found. Using last epoch model instead!!!")
-			ckpt_path = os.path.join(self.args.ckpt_dir, '{}.ckpt'.format(model_name))
-		ckpt = torch.load(ckpt_path, map_location=lambda storage, loc: storage)
-		self.model.load_state_dict(ckpt['state_dict'])
