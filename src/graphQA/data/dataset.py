@@ -243,7 +243,7 @@ class GQADataset(Dataset):
 		objects[:,2] *= (spatial_width-1)
 		objects[:,1] *= (spatial_height-1)
 		objects[:,3] *= (spatial_height-1)
-		attn_mask /= np.max(attn_mask)
+		attn_mask /= max(1.0, np.max(attn_mask))
 
 		if self.args.criterion == "bce":
 			ans_output = torch.zeros(len(self.vocab['answer_token_to_idx']), dtype=torch.float32)
@@ -275,7 +275,6 @@ class GQADataset(Dataset):
 				'attn_mask': torch.as_tensor(attn_mask, dtype=torch.float),
 				'obj_region_mask': torch.as_tensor(obj_region_mask, dtype=torch.float),
 			}
-
 		if self.args.opt_met:
 			data_obj['valid_ans'] = valid_ans_mat
 			data_obj['plausible_ans'] = plausible_ans_mat
