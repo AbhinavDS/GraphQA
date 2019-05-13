@@ -162,17 +162,6 @@ class Trainer:
 
 			train_acc = np.mean(train_accuracies)
 			
-			# ques_lens = None
-			# sorted_indices = None
-			# ques_lens = None
-			# img_feats = None
-			# ques = None
-			# objs = None
-			# adj_mat = None
-			# num_objs = None
-			# ans_output = None
-			# ans_distrib = None
-			del ans_output
 			val_loss, val_acc = self.eval()
 
 			self.log_stats(loss, val_loss, train_acc, val_acc, epoch)

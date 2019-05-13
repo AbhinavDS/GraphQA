@@ -159,7 +159,8 @@ class GQADataset(Dataset):
 		question_tokens = preprocess_utils.tokenize(question,
 												punct_to_keep=[';', ','],
 												punct_to_remove=['?', '.'])
-		ques_len = len(question_tokens)
+
+		ques_len = len(question_tokens) if len(question_tokens) <= self.meta_data['max_ques_len'] else self.meta_data['max_ques_len'] 
 		question_encoded = preprocess_utils.encode(question_tokens,
 												 self.vocab['question_token_to_idx'],
 												 allow_unk=True, max_len=self.meta_data['max_ques_len'])
