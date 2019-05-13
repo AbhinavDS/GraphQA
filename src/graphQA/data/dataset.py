@@ -49,6 +49,10 @@ class GQADataset(Dataset):
 		self.obj_names_embeddings_mat = None
 		self.meta_data = utils.load_vocab(meta_data_json)
 		
+		attn_factor = 0.25
+		self.attn_width = (int)(640 * attn_factor)
+		self.attn_height = (int)(480 * attn_factor)
+
 		if self.args.opt_met:
 			self.index_choices()
 
@@ -89,6 +93,8 @@ class GQADataset(Dataset):
 		config['ques_null_id'] = preprocess_utils.SPECIAL_TOKENS['<NULL>']
 		config['ques_unk_id'] = preprocess_utils.SPECIAL_TOKENS['<UNK>']
 		config['ques_vocab_sz'] = len(self.vocab['question_token_to_idx'])
+		config['attn_height'] = self.attn_height
+		config['attn_width'] = self.attn_width
 
 		return config
 
@@ -141,6 +147,14 @@ class GQADataset(Dataset):
 		# QA
 		question = self.questions[key]['question']
 		answer = self.questions[key].get('answer', '<NULL>')
+
+		# Attention
+		attn_mask = np.zeros((self.attn_height, self.attn_width), dtype=np.float32)
+		if "scene" in self.questions[key]['semanticStr']:
+			attn_mask += 1
+		q_attn_obj = list(self.questions[key]['annotations']['question'].values())
+		a_attn_obj = list(self.questions[key]['annotations']['fullAnswer'].values())
+
 		# Encode question and answer (tokenize as well)
 		question_tokens = preprocess_utils.tokenize(question,
 												punct_to_keep=[';', ','],
@@ -160,6 +174,8 @@ class GQADataset(Dataset):
 		obj_wrds_mat = np.zeros((self.meta_data['max_num_objs']))
 		num_relations = len(self.sg_vocab['relation_token_to_idx'])
 		objects = np.zeros((self.meta_data['max_num_objs'], 4), dtype=np.float32) - 1
+		obj_region_mask = np.zeros((self.meta_data['max_num_objs'], self.attn_height, self.attn_width), dtype=np.float32)
+
 
 		if self.args.use_rel_emb:
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs'] * num_relations))
@@ -178,6 +194,19 @@ class GQADataset(Dataset):
 			objects[num_objs][1] = max(obj['y'] / height, 0.0)
 			objects[num_objs][2] = min((obj['x'] + obj['w']) / width, 1.0)
 			objects[num_objs][3] = min((obj['y'] + obj['h']) / height, 1.0)
+
+			x1 = int(objects[num_objs][0] * self.attn_width)
+			y1 = int(objects[num_objs][1] * self.attn_height)
+			x2 = int(objects[num_objs][2] * self.attn_width)
+			y2 = int(objects[num_objs][3] * self.attn_height)
+			obj_region_mask[num_objs][y1:y2, x1:x2] = 1.0
+				
+			# Attended Object
+			if obj_key in q_attn_obj:
+				attn_mask += obj_region_mask[num_objs]
+			if obj_key in a_attn_obj:
+				attn_mask += obj_region_mask[num_objs]
+
 
 			obj_wrds_mat[num_objs] = preprocess_utils.encode([obj['name']],
 												 self.sg_vocab['object_token_to_idx'],
@@ -214,6 +243,7 @@ class GQADataset(Dataset):
 		objects[:,2] *= (spatial_width-1)
 		objects[:,1] *= (spatial_height-1)
 		objects[:,3] *= (spatial_height-1)
+		attn_mask /= np.max(attn_mask)
 
 		if self.args.criterion == "bce":
 			ans_output = torch.zeros(len(self.vocab['answer_token_to_idx']), dtype=torch.float32)
@@ -241,7 +271,9 @@ class GQADataset(Dataset):
 				'A': torch.as_tensor(A, dtype=torch.float),
 				'image_feat': torch.as_tensor(image_feat, dtype=torch.float),
 				'ques_id': idx,
-				'obj_wrds': torch.as_tensor(obj_wrds_mat, dtype=torch.long)
+				'obj_wrds': torch.as_tensor(obj_wrds_mat, dtype=torch.long),
+				'attn_mask': torch.as_tensor(attn_mask, dtype=torch.float),
+				'obj_region_mask': torch.as_tensor(obj_region_mask, dtype=torch.float),
 			}
 
 		if self.args.opt_met:

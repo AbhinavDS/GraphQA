@@ -62,16 +62,18 @@ class Evaluator:
 			ques = batch['ques'].to(self.device)[sorted_indices]
 			objs = batch['obj_bboxes'].to(self.device)[sorted_indices]
 			adj_mat = batch['A'].to(self.device)[sorted_indices]
-			num_obj = batch['num_objs'].to(self.device)[sorted_indices] 
+			num_objs = batch['num_objs'].to(self.device)[sorted_indices] 
 			ans_output = batch['ans'].to(self.device)[sorted_indices]
 			ques_ids = batch['ques_id'].to(self.device)[sorted_indices]
 			obj_wrds = batch['obj_wrds'].to(self.device)[sorted_indices]
+			obj_region_mask = batch['obj_region_mask'].to(self.device)[sorted_indices]
+			attn_mask = batch['attn_mask'].to(self.device)[sorted_indices]
 
 			if self.args.opt_met:
 				valid_ans = batch['valid_ans'].to(self.device)[sorted_indices]
 				plausible_ans = batch['plausible_ans'].to(self.device)[sorted_indices]
 
-			ans_distrib = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds)
+			ans_distrib, pred_attn_mask, attn_wt = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_objs, obj_wrds, obj_region_mask)
 			
 			accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
 
@@ -82,7 +84,7 @@ class Evaluator:
 				plausible_total += plausible_batch
 
 			if self.get_preds:
-				preds_list += self.extract_preds(ans_distrib.detach().cpu().numpy(), ques_ids.cpu().numpy())
+				preds_list += self.extract_preds(ans_distrib.detach().cpu().numpy(), ques_ids.cpu().numpy(), attn_wt.detach().cpu().numpy(), objs.cpu().numpy(), num_objs.cpu().numpy())
 
 			acc = np.mean(accuracies)
 			print("After Batch: {}, Evaluation Accuracy: {}".format(i+1, acc))
@@ -137,19 +139,30 @@ class Evaluator:
 
 		return valid_total, plausible_total, sz
 	
-	def extract_preds(self, ans_distrib, ques_ids):
+	def extract_preds(self, ans_distrib, ques_ids, attn_wt, obj_rois, num_objs):
 
 		preds_list = []
 		pred_ids = np.argmax(ans_distrib, axis = -1)
 
+		obj_rois[:,:,0] /= (self.args.pool_w - 1)
+		obj_rois[:,:,2] /= (self.args.pool_w - 1)
+		obj_rois[:,:,1] /= (self.args.pool_h - 1)
+		obj_rois[:,:,3] /= (self.args.pool_h - 1)
+		
 		for j in range(len(ques_ids)):
 			
 			answer_text = self.dataset.vocab['answer_idx_to_token'][pred_ids[j]]
 
+			attention = []
+			for i in range(num_objs[j]):
+				attention.append([(float)(obj_rois[j][i][0]), (float)(obj_rois[j][i][1]), (float)(obj_rois[j][i][2]), (float)(obj_rois[j][i][3]), (float)(attn_wt[j][i])])
+
 			pred_obj = {
 				'questionId': self.dataset.questions_keys[ques_ids[j]],
-				'prediction': answer_text
+				'prediction': answer_text,
+				'attention': attention,
 			}
+
 
 			preds_list.append(pred_obj)
 

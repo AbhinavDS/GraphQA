@@ -150,6 +150,11 @@ def parse_args():
 	parser.add_argument('--mac_self_attention', default=False, action="store_true", help="Use self attention in MAC unit")
 	parser.add_argument('--mac_dim', default=512, type=int, help="The default dimension of the LSTM cells in the MAC network")
 
+	# Options for extra metric optimizations
+	parser.add_argument('--lambda_ground', type=float, default=20, help="Weight for Grounding Loss")
+	parser.add_argument('--lambda_valid', type=float, default=0.02, help="Weight for Validity Loss")
+	parser.add_argument('--lambda_plaus', type=float, default=0.04, help="Weight for Plausibility Loss")
+
 	# Options for SAN
 	parser.add_argument('--use_san', action="store_true", default=False, help="Use Stacked Attention Network")
 	parser.add_argument('--n_attn_layers', default=2, type=int, help="Number of attentions in the stack of SAN")

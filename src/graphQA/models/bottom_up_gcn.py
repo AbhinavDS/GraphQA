@@ -57,7 +57,7 @@ class BottomUpGCN(nn.Module):
 		self.device = args.device
 		self.use_rel_words = args.use_rel_words
 
-	def forward(self, img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds):
+	def forward(self, img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds, obj_region_mask):
 
 		"""
 		@param img_feats: The image features for the corresponding image of each sample. (batch_size, n_channels, width, height)
@@ -90,9 +90,9 @@ class BottomUpGCN(nn.Module):
 
 		if self.use_img_feats:
 			# Obtain the attented image feature
-			attn_img_feats = self.attn_layer(gcn_obj_feats, ques_emb, num_obj, img_feats)
+			attn_img_feats, pred_attn_mask, attn_wt = self.attn_layer(gcn_obj_feats, ques_emb, num_obj, obj_region_mask, img_feats)
 		else:
-			attn_img_feats = self.attn_layer(gcn_obj_feats, ques_emb, num_obj)
+			attn_img_feats, pred_attn_mask, attn_wt = self.attn_layer(gcn_obj_feats, ques_emb, num_obj, obj_region_mask)
 
 		# Use the attented image feature to obtain a probability distribution over the possible set of answers
 
@@ -103,5 +103,5 @@ class BottomUpGCN(nn.Module):
 
 		ans_distrib = self.ans_linear(self.ans_gate(combined_feats))
 
-		return ans_distrib
+		return ans_distrib, pred_attn_mask, attn_wt
 		
