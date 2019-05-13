@@ -28,4 +28,4 @@ python -m utils.qa_preprocessing --input_questions_path "${OUT_DATA_DIR}/${SPLIT
 
 python -m utils.sg_preprocessing --input_relations_path "${OUT_DATA_DIR}/gold/train_sceneGraphs.json" --output_vocab_path "${OUT_DATA_DIR}/gold/sg_vocab.json" --meta_data_path "${OUT_DATA_DIR}/meta_data.json" --inp_word2vec_path $WORD2VEC_PATH --out_word2vec_dir "${OUT_DATA_DIR}/gold/"
 
-python -m utils.filter_choices --data_dir $OUT_DATA_DIR --src "${DATA_DIR}/zipfiles/eval_metrics/train_choies.json"
+python -m utils.filter_choices --data_dir $OUT_DATA_DIR --src "${DATA_DIR}/zipfiles/eval_metrics/train_choices.json"

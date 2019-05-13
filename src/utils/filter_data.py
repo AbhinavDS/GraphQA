@@ -31,7 +31,7 @@ def save_scene_graphs(img_ids, inp_sg, inp_split, out_split, args):
 	for idx in img_ids:
 		out_sg[idx] = inp_sg[idx]
 
-	with open(os.path.join(args.out_data_dir, '{}_sceneGraphs.json'.format(out_split)), 'w') as out_sgf:
+	with open(os.path.join(args.out_data_dir, 'gold', '{}_sceneGraphs.json'.format(out_split)), 'w') as out_sgf:
 		json.dump(out_sg, out_sgf, indent=4)
 
 def write_data(data, img_ids, qa_ids, split_name, args):
@@ -97,6 +97,7 @@ def filter_qa(split, args):
 		pct = float(args.pct) / 100
 
 	qa_ids = [ x for x in data if data[x]['types']['structural'] == 'query' ]
+	#qa_ids = [ x for x in data ]
 	filtered_image_ids = list(set([ data[x]['imageId'] for x in qa_ids ]) - set(invalid_img_ids))
 	image_ids = []
 	for img_id in filtered_image_ids:
@@ -139,6 +140,7 @@ if __name__ == "__main__":
 
 	if not os.path.exists(args.out_data_dir):
 		os.makedirs(args.out_data_dir)
+		os.makedirs(os.path.join(args.out_data_dir, 'gold'))
 	
 	filter_qa('train', args)
 	#filter_qa('val', args)
