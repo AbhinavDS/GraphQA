@@ -124,6 +124,7 @@ def parse_args():
 	
 	# Options for Image Model
 	parser.add_argument('--n_img_feats', type=int, default=2048, help="The dimension of the Image Features")
+	parser.add_argument('--reduce_img_feats', action="store_true", help="Flag to indicate reduction of image features to same as relation word embedding through a linear layer")
 	parser.add_argument('--weights_init', default='xavier', help="The initializer for weight matrices in the network")
 	parser.add_argument('--gcn_depth', default=5, type=int, help="The depth of the GCN network")
 	parser.add_argument('--rel_emb_dim', default=300, type=int, help="The dimensionality of the relation embedding")

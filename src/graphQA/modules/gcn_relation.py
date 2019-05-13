@@ -8,7 +8,13 @@ class GCN(nn.Module):
 	def __init__(self, args, rel_word2vec=None):
 		super(GCN, self).__init__()
 		self.device = args.device
-		self.n_img_feats = args.n_img_feats
+		if self.args.reduce_img_feats:
+			self.reduce_img_feats = self.args.reduce_img_feats
+			n_img_feats = args.rel_emb_dim
+		else:
+			n_img_feats = args.n_img_feats
+
+		self.n_img_feats = n_img_feats
 		self.r_img_feats = args.obj_emb_dim # kept same as obj dimension
 		self.max_rels = args.max_rels
 		self.rel_emb_dim = args.rel_emb_dim

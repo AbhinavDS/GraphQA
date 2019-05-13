@@ -22,8 +22,18 @@ class BottomUpGCN(nn.Module):
 	def __init__(self, args, word2vec=None, rel_word2vec=None, obj_name_word2vec=None):
 
 		super(BottomUpGCN, self).__init__()
-		
-		self.img_gate = NonLinearity(args.n_img_feats, args.n_qi_gate, args.nl,args.drop_prob)
+
+		if self.args.reduce_img_feats:
+			self.reduce_img_feats = self.args.reduce_img_feats
+			n_img_feats = args.rel_emb_dim
+			self.img_redn_layer = nn.Sequential(
+					nn.Conv2d(args.n_img_feats, args.rel_emb_dim, 3, padding=1),
+					nn.ReLU()
+				)
+		else:
+			n_img_feats = args.n_img_feats
+
+		self.img_gate = NonLinearity(n_img_feats, args.n_qi_gate, args.nl,args.drop_prob)
 		if args.use_rel_emb:
 			self.gcn = GCNRelation(args, rel_word2vec=rel_word2vec)
 			self.img_gate = NonLinearity(args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
@@ -32,7 +42,7 @@ class BottomUpGCN(nn.Module):
 			if args.use_blind:
 				self.img_gate = NonLinearity(args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
 			else:
-				self.img_gate = NonLinearity(args.n_img_feats + args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
+				self.img_gate = NonLinearity(n_img_feats + args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
 		else:
 			self.gcn = GCN(args)
 
@@ -69,11 +79,14 @@ class BottomUpGCN(nn.Module):
 		@param num_obj: The number of actual objects in each image. (batch_size)
 		"""
 
+		if self.reduce_img_feats:
+			img_feats = self.img_redn_layer(img_feats)
+
 		# Obtain Object Features for the Image
 		rois = utils.batch_roiproposals(objs, self.device)# Change this later
 		obj_feats = roi_pooling_2d(img_feats, rois, self.roi_output_size)#.detach()
 		obj_feats = self.avg_layer(obj_feats).view(objs.size(0), objs.size(1), -1)
-		
+
 		if self.use_rel_words:
 			gcn_obj_feats = self.gcn(obj_feats, obj_wrds, adj_mat)	
 		else:
