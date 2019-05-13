@@ -132,6 +132,8 @@ def parse_args():
 	parser.add_argument('--use_rel_words', action="store_true", default=False, help="Use object names and relations in GCN")
 	parser.add_argument('--obj_emb_dim', default=300, type=int, help="The dimensionality of the object name embedding")
 	parser.add_argument('--use_blind', action="store_true", default=False, help="Use blind model (only applicable with rel_words)")
+	parser.add_argument('--use_rel_probs', action="store_true", default=False, help="Use a linear to aggregate relation probabilities (only applicable with rel_words)")
+	parser.add_argument('--use_rel_probs_sum', action="store_true", default=False, help="Use sum to aggregate relation probabilities (only applicable with rel_words)")
 
 	# Options for Answering Model
 	parser.add_argument('--n_qi_gate', type=int, default=1024, help="The dimension of the Question-Image Gate in Answerer Model")

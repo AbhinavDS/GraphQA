@@ -10,6 +10,7 @@ from torch.nn.utils.weight_norm import weight_norm as wn
 from ..modules.gcn import GCN
 from ..modules.gcn_relation import GCN as GCNRelation
 from ..modules.gcn_rel_words import GCN as GCNRelWords
+from ..modules.gcn_prob_rel_words import GCN as GCNProbRelWords
 from ..modules.non_linearity import NonLinearity
 from ..modules.attention import TopDownAttention
 
@@ -38,7 +39,12 @@ class BottomUpGCN(nn.Module):
 			self.gcn = GCNRelation(args, rel_word2vec=rel_word2vec)
 			self.img_gate = NonLinearity(args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
 		elif args.use_rel_words:
-			self.gcn = GCNRelWords(args, rel_word2vec=rel_word2vec, obj_name_word2vec=obj_name_word2vec)
+
+			if args.use_rel_probs or args.use_rel_words_sum:
+				self.gcn = GCNProbRelWords(args, rel_word2vec=rel_word2vec, obj_name_word2vec=obj_name_word2vec)
+			else:
+				self.gcn = GCNRelWords(args, rel_word2vec=rel_word2vec, obj_name_word2vec=obj_name_word2vec)
+			
 			if args.use_blind:
 				self.img_gate = NonLinearity(args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
 			else:
