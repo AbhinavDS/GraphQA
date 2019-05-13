@@ -31,7 +31,7 @@ class Config(object):
 			self.choices_data_path[mode] = os.path.join(self.expt_data_dir, '{mode}_choices.json'.format(mode=mode)) 
 		
 		# Extract the test set dir path
-		test_set_dir = ('/').join(self.expt_data_dir.split('/')[:-2] + ['test_set'])
+		test_set_dir = ('/').join(self.expt_data_dir.split('/')[:-2] + [self.test_dirname])
 		
 		# Add the paths for test set
 		self.qa_data_path['test'] = os.path.join(test_set_dir, '{dataset}_{mode}_data.json'.format(dataset=self.dataset, mode='test'))
@@ -95,6 +95,7 @@ def parse_args():
 	parser.add_argument('--expt_res_base_dir', type=str, help="Path to base directory where all the results and logs related to the experiment will be stored")
 	parser.add_argument('--expt_name', type=str, help="Name of the experiment to uniquely identify its folder")
 	parser.add_argument('--expt_data_dir', type=str, help="The path which contains most of the data required for the experiment")
+	parser.add_argument('--test_dirname', default="test_set", type=str, help="The path which contains the test data required for the experiment")
 	parser.add_argument('--feats_data_dir', type=str, help="The path of the directory containing image and object features")
 	parser.add_argument('--gen_mode', type=str, default="gold", choices=["gold","pred_cls","sg_cls","sg_gen"], help="The path of directory containing scenegraphs")
 	parser.add_argument('--get_preds', default=False, action="store_true", help="Flag to indicate if the evaluator should store the predictions as well")
