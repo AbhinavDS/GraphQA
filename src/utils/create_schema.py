@@ -22,7 +22,7 @@ def parse_args():
 
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--data_dir', help="The path of the trainset ")
-
+	parser.add_argument('--test_dirname', help="The path of the test set")
 	parser.add_argument('--out_dir', help="Output directory where all generated files will be stored")
 
 	return parser.parse_args()
@@ -37,7 +37,7 @@ def read_sg_data(args):
 	for spl in splits:
 
 		if spl == 'test':
-			with open(os.path.join(args.data_dir, '..', 'test_set', 'gold', 'test_sceneGraphs.json'), 'r') as f:
+			with open(os.path.join(args.data_dir, '..', args.test_dirname, 'gold', 'test_sceneGraphs.json'), 'r') as f:
 				sg_data['test'] = json.load(f)
 			continue
 

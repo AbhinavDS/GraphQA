@@ -34,6 +34,7 @@ def encode_filenames(data, filename_to_idx):
 
 def add_images(im_data, h5_file, args):
     fns = []; ids = []; idx = []
+    filemap = {}
     #corrupted_ims = ['1592.jpg', '1722.jpg', '4616.jpg', '4617.jpg']
     for i, img in enumerate(im_data):
         basename =  str(img['image_id']) + '.jpg'
@@ -45,6 +46,10 @@ def add_images(im_data, h5_file, args):
             fns.append(filename)
             ids.append(img['image_id'])
             idx.append(i)
+            filemap[i] = str(img['image_id'])
+
+    with open(os.path.join(args.imh5_dir, 'filemap.json'), 'w') as fm:
+        json.dump(filemap, fm)
 
     ids = np.array(ids, dtype=np.int32)
     idx = np.array(idx, dtype=np.int32)
