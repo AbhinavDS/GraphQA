@@ -103,7 +103,6 @@ class Trainer:
 			
 			self.model.train()
 
-			loss = 0.0
 			train_accuracies = []
 
 			for i, batch in enumerate(self.train_loader):
@@ -128,13 +127,13 @@ class Trainer:
 				
 				action, action_log_probs = self.select_action(policy_distrib)
 
-				rewards = self.compute_reward(action, valid_ans, plausible_ans)
+				rewards = self.compute_reward(action, valid_ans, plausible_ans, ans_output)
 
 				advantage = rewards - value
 				actor_loss = -(action_log_probs * advantage)
 				critic_loss = F.smooth_l1_loss(value, rewards)
-				xce_loss = self.criterion(ans_distrib, ans_output)
-				batch_loss = (actor_loss + critic_loss).mean() + xce_loss
+				#xce_loss = self.criterion(ans_distrib, ans_output)
+				batch_loss = (actor_loss + critic_loss).mean() #+ xce_loss
 
 				batch_loss.backward()
 
@@ -170,7 +169,7 @@ class Trainer:
 
 		return action, sampler.log_prob(action)
 
-	def compute_reward(self, action, valid_ans, plausible_ans):
+	def compute_reward(self, action, valid_ans, plausible_ans, ans_output):
 
 		"""
 		Assigns the reward for each action in the batch based on the metrics to be optimized for
@@ -180,10 +179,16 @@ class Trainer:
 		rewards = torch.zeros(batch_sz, dtype=torch.float32).to(self.device)
 		valid_ans = valid_ans.detach().cpu().numpy()
 		plausible_ans = plausible_ans.detach().cpu().numpy()
+		ans_output = ans_output.detach().cpu().numpy()
 
 		for i in range(batch_sz):
 			act = int(action[i])
-			rewards[i] = 0.3 * valid_ans[i][act] + 0.7 * plausible_ans[i][act]
+
+			rv = 1.0 if valid_ans[i][act] == 1 else -1.0
+			rp = 1.0 if plausible_ans[i][act] == 1 else -1.0
+			ra = 1.0 if ans_output[i] == act else -1.0
+			rewards[i] = 0.3 * rv + 0.7 * rp
+			rewards[i] = 0.4*rewards[i] + ra
 
 		return rewards
 
@@ -218,7 +223,7 @@ class Trainer:
 			
 			action = policy_distrib.argmax(dim=-1, keepdim=False)
 
-			rewards = self.compute_reward(action, valid_ans, plausible_ans)
+			rewards = self.compute_reward(action, valid_ans, plausible_ans, ans_output)
 
 			advantage = rewards - value
 			xce_loss = self.criterion(ans_distrib, ans_output)
