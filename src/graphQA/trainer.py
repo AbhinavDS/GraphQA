@@ -125,11 +125,16 @@ class Trainer:
 				obj_region_mask = batch['obj_region_mask'].to(self.device)[sorted_indices]
 				attn_mask = batch['attn_mask'].to(self.device)[sorted_indices]
 				
+				if self.args.use_rel_probs or self.args.use_rel_probs_sum:
+					rel_prob_mat = batch['P'].to(self.device)[sorted_indices]
+				else:
+					rel_prob_mat = None
+
 				if self.args.opt_met:
 					valid_ans = batch['valid_ans'].to(self.device)[sorted_indices]
 					plausible_ans = batch['plausible_ans'].to(self.device)[sorted_indices]
 
-				ans_distrib, pred_attn_mask, _ = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_objs, obj_wrds, 	obj_region_mask)
+				ans_distrib, pred_attn_mask, _ = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_objs, obj_wrds, 	obj_region_mask, rel_prob_mat)
 				pred_attn_mask[attn_mask <= 0] = 0
 
 				#print(ans_distrib.size(), ans_output.size())
@@ -159,6 +164,7 @@ class Trainer:
 						print('Train Epoch: {0:}, Iteration: {1:}, Total Loss: {2:.3f}, AL: {3:.3f}, VL: {4:.3f}, PL: {5:.3f}, GL: {6:.3f}'.format(epoch, i, batch_loss.data, accur_loss, valid_loss.data, plaus_loss.data, ground_loss.data))
 					else:
 						print('Train Epoch: {}, Iteration: {}, Loss: {}'.format(epoch, i, batch_loss.data))
+				break
 
 			train_acc = np.mean(train_accuracies)
 			
@@ -201,7 +207,12 @@ class Trainer:
 			obj_region_mask = batch['obj_region_mask'].to(self.device)[sorted_indices]
 			attn_mask = batch['attn_mask'].to(self.device)[sorted_indices]
 
-			ans_distrib, pred_attn_mask, _ = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_objs, obj_wrds, obj_region_mask)
+			if self.args.use_rel_probs or self.args.use_rel_probs_sum:
+				rel_prob_mat = batch['P'].to(self.device)[sorted_indices]
+			else:
+				rel_prob_mat = None
+
+			ans_distrib, pred_attn_mask, _ = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_objs, obj_wrds, obj_region_mask, rel_prob_mat)
 			pred_attn_mask[attn_mask <= 0] = 0
 
 			if self.args.opt_met:

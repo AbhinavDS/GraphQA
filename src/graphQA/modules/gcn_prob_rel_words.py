@@ -6,6 +6,7 @@ import numpy as np
 import torch.nn as nn
 import torch
 from torch.autograd import Variable
+from .non_linearity import NonLinearity
 
 class GCN(nn.Module):
 	def __init__(self, args, rel_word2vec=None, obj_name_word2vec=None):
@@ -70,21 +71,27 @@ class GCN(nn.Module):
 		batch_size, objects, _ = obj_img_feats.size()
 		x = self.obj_name_embedding(obj_wrds)
 		obj_rel_probs = obj_rel_probs.unsqueeze(-1)
-		rel_embed = self.relation_embedding(obj_rels.long())
-		
-		print('Sizes: ', obj_rel_probs.size(), rel_embed.size())
-		rel_prod = torch.mul(rel_embed, obj_rel_probs)
 
+		# rel_input = torch.LongTensor(list(rel for rel in range(self.max_rels))).to(self.device)
+		# rel_embed = self.relation_embedding(rel_input)
+		# rel_embed = rel_embed.unsqueeze(0).unsqueeze(1).unsqueeze(2).repeat(batch_size, objects, objects, 1, 1)
+		
+		rel_embed = self.relation_embedding(obj_rels.long())
+	
+		rel_prod = torch.mul(rel_embed, obj_rel_probs)
+		rel_embed = rel_prod
 		rel_embed = rel_embed.permute(0, 1, 2, 4, 3)
 		if self.use_rel_probs:
 			rel_embed = self.rel_proj(rel_embed).squeeze(-1)
 		elif self.use_rel_probs_sum:
-			rel_embed = rel_embed.sum(axis=-1, keepdim=False)
+			rel_embed = rel_embed.sum(dim=-1, keepdim=False)
 		else:
 			raise('Specify correct Embedding Projection method')
 
 		A = (obj_rels > 0).float()
-		
+		A = A.sum(dim=3, keepdim=False)
+		A = (A>0).float()
+
 		denom = A.sum(dim=2, keepdim=False)
 		denom[denom == 0] = 1
 		denom = denom.unsqueeze(2)
@@ -92,7 +99,8 @@ class GCN(nn.Module):
 		for i in range(0,len(self.layers),2):
 			xr = x.repeat(1, objects, 1).view(batch_size, objects, objects, -1)
 			xr = self.layers[i+1](torch.mul(xr, rel_embed)).permute(0, 2, 1, 3).contiguous().view(batch_size, objects, -1)
-			bp = torch.bmm(A, xr).view(batch_size, objects, objects, -1).sum(dim=2, keepdim=False)
+			bp = torch.bmm(A, xr).view(batch_size, objects, objects, -1)
+			bp = bp.sum(dim=2, keepdim=False)
 			x = self.a(self.layers[i](x) + torch.div(bp, denom) + x)
 		
 		if self.use_blind:

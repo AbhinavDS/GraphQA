@@ -195,7 +195,6 @@ class GQADataset(Dataset):
 		else:
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs']))
 
-
 		object_keys = list(sg['objects'].keys())
 		for num_objs, obj_key in enumerate(object_keys):
 
@@ -298,5 +297,5 @@ class GQADataset(Dataset):
 			data_obj['valid_ans'] = valid_ans_mat
 			data_obj['plausible_ans'] = plausible_ans_mat
 		if self.args.use_rel_probs or self.args.use_rel_probs_sum:
-			data_obj['P'] = torch.as_tensor(P, dtype=torch.float),
+			data_obj['P'] = torch.as_tensor(P, dtype=torch.float)
 		return data_obj

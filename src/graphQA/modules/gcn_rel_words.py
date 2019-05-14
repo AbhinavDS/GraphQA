@@ -76,6 +76,7 @@ class GCN(nn.Module):
 		for i in range(0,len(self.layers),2):
 			xr = x.repeat(1, objects, 1).view(batch_size, objects, objects, -1)
 			xr = self.layers[i+1](torch.mul(xr, rel_embed)).permute(0, 2, 1, 3).contiguous().view(batch_size, objects, -1)
+			print (A.size(), xr.size())
 			bp = torch.bmm(A, xr).view(batch_size, objects, objects, -1).sum(dim=2, keepdim=False)
 			x = self.a(self.layers[i](x) + torch.div(bp, denom) + x)
 		

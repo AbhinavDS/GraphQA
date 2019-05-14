@@ -42,13 +42,15 @@ class BottomUpGCN(nn.Module):
 		if args.use_rel_emb:
 			self.gcn = GCNRelation(args, rel_word2vec=rel_word2vec)
 			self.img_gate = NonLinearity(args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
-		elif args.use_rel_words:
-
-			if args.use_rel_probs or args.use_rel_probs_sum:
-				self.gcn = GCNProbRelWords(args, rel_word2vec=rel_word2vec, obj_name_word2vec=obj_name_word2vec)
+		elif args.use_rel_probs or args.use_rel_probs_sum:
+			self.gcn = GCNProbRelWords(args, rel_word2vec=rel_word2vec, obj_name_word2vec=obj_name_word2vec)
+			if args.use_blind:
+				self.img_gate = NonLinearity(args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
 			else:
-				self.gcn = GCNRelWords(args, rel_word2vec=rel_word2vec, obj_name_word2vec=obj_name_word2vec)
-			
+				self.img_gate = NonLinearity(n_img_feats + args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
+		elif args.use_rel_words:
+			self.gcn = GCNRelWords(args, rel_word2vec=rel_word2vec, obj_name_word2vec=obj_name_word2vec)
+	
 			if args.use_blind:
 				self.img_gate = NonLinearity(args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
 			else:
@@ -76,8 +78,10 @@ class BottomUpGCN(nn.Module):
 		self.avg_layer = nn.AvgPool2d(self.roi_output_size)
 		self.device = args.device
 		self.use_rel_words = args.use_rel_words
+		self.use_rel_probs = args.use_rel_probs
+		self.use_rel_probs_sum = args.use_rel_probs_sum
 
-	def forward(self, img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds, obj_region_mask):
+	def forward(self, img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds, obj_region_mask, rel_prob_mat):
 
 		"""
 		@param img_feats: The image features for the corresponding image of each sample. (batch_size, n_channels, width, height)
@@ -97,7 +101,9 @@ class BottomUpGCN(nn.Module):
 		obj_feats = roi_pooling_2d(img_feats, rois, self.roi_output_size)#.detach()
 		obj_feats = self.avg_layer(obj_feats).view(objs.size(0), objs.size(1), -1)
 
-		if self.use_rel_words:
+		if self.use_rel_probs or self.use_rel_probs_sum:
+			gcn_obj_feats = self.gcn(obj_feats, obj_wrds, adj_mat, rel_prob_mat)	
+		elif self.use_rel_words:
 			gcn_obj_feats = self.gcn(obj_feats, obj_wrds, adj_mat)	
 		else:
 			gcn_obj_feats = self.gcn(obj_feats, adj_mat)
