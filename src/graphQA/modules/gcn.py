@@ -8,8 +8,8 @@ class GCN(nn.Module):
 		
 		super(GCN, self).__init__()
 
-		if self.args.reduce_img_feats:
-			self.reduce_img_feats = self.args.reduce_img_feats
+		if args.reduce_img_feats:
+			self.reduce_img_feats = args.reduce_img_feats
 			n_img_feats = args.rel_emb_dim
 		else:
 			n_img_feats = args.n_img_feats

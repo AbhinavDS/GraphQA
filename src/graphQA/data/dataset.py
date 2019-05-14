@@ -63,7 +63,7 @@ class GQADataset(Dataset):
 				self.rel_word2vec_path = args.rel_word2vec_path
 				self.rel_emb_dim = args.rel_emb_dim
 				self.rel_embeddings_mat = self.load_embeddings(self.sg_vocab['relation_token_to_idx'], self.rel_emb_dim, self.rel_word2vec_path)
-			elif self.args.use_rel_words:
+			elif self.args.use_rel_words or self.args.use_rel_probs or self.args.use_rel_probs_sum:
 				self.rel_word2vec_path = args.rel_word2vec_path
 				self.obj_name_word2vec_path = args.obj_name_word2vec_path
 				self.rel_emb_dim = args.rel_emb_dim
@@ -180,6 +180,21 @@ class GQADataset(Dataset):
 
 		if self.args.use_rel_emb:
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs'] * num_relations))
+		elif self.args.use_rel_probs or self.args.use_rel_probs_sum:
+			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs'], num_relations))
+			P = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs'], num_relations))
+			rel_keys = preprocess_utils.encode(sg['rel_keys'],
+												 self.sg_vocab['relation_token_to_idx'],
+												 allow_unk=True)
+			reversemap = []
+			for i in range(num_relations):
+				try:
+					j = (rel_keys.index(i))
+				except:
+					j = len(rel_keys)	
+				reversemap.append(j)
+			assert len(reversemap) == num_relations
+			reversemap = np.array(reversemap)
 		else:
 			A = np.zeros((self.meta_data['max_num_objs'], self.meta_data['max_num_objs']))
 
@@ -230,6 +245,12 @@ class GQADataset(Dataset):
 					A[num_objs][A_id] = 1 # can give relation id in OxO matrix if needed
 				elif self.args.use_rel_words:
 					A[num_objs][obj_id] = rel_encoded[0]
+				elif self.args.use_rel_probs or self.args.use_rel_probs_sum:
+					rel_probs = relation['probs']
+					rel_probs.append(0.0)
+					rel_probs = np.array(rel_probs)
+					A[num_objs][obj_id] = np.arange(num_relations)
+					P[num_objs][obj_id] = rel_probs[reversemap]
 				else:
 					A[num_objs][obj_id] = 1
 	
@@ -279,5 +300,6 @@ class GQADataset(Dataset):
 		if self.args.opt_met:
 			data_obj['valid_ans'] = valid_ans_mat
 			data_obj['plausible_ans'] = plausible_ans_mat
-
+		if self.args.rel_probs or self.args.use_rel_probs_sum:
+			data_obj['P'] = torch.as_tensor(P, dtype=torch.float),
 		return data_obj
