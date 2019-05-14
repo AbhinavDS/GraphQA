@@ -40,6 +40,20 @@ class SAN(nn.Module):
 		self.avg_layer = nn.AvgPool2d(self.roi_output_size)
 		self.use_rel_words = args.use_rel_words
 
+		self.reduce_img_feats = args.reduce_img_feats
+		if args.reduce_img_feats:
+			n_img_feats = args.rel_emb_dim
+			self.img_redn_layer = nn.Sequential(
+					nn.Conv2d(args.n_img_feats, 1024, 3, padding=1),
+					nn.ReLU(),
+					nn.Conv2d(1024, args.rel_emb_dim, 3, padding=1),
+					nn.ReLU(),
+					nn.Conv2d(args.rel_emb_dim, args.rel_emb_dim, 3, padding=1),
+					nn.ReLU()
+				)
+		else:
+			n_img_feats = args.n_img_feats
+
 		if args.use_rel_emb:
 			self.gcn = GCNRelation(args, rel_word2vec=rel_word2vec)
 			obj_feats_sz = args.obj_emb_dim
@@ -48,9 +62,9 @@ class SAN(nn.Module):
 			if args.use_blind:
 				obj_feats_sz = args.obj_emb_dim
 			else:
-				obj_feats_sz = args.obj_emb_dim + args.n_img_feats
+				obj_feats_sz = args.obj_emb_dim + n_img_feats
 		else:
-			obj_feats_sz = args.n_img_feats
+			obj_feats_sz = n_img_feats
 			self.gcn = GCN(args)
 
 		if self.use_img_feats:
@@ -85,6 +99,9 @@ class SAN(nn.Module):
 		@param ques_lens: The true length of each question in the batch. (batch_size)
 		@param num_obj: The number of actual objects in each image. (batch_size)
 		"""
+
+		if self.reduce_img_feats:
+			img_feats = self.img_redn_layer(img_feats)
 
 		# Obtain Object Features for the Image
 		rois = utils.batch_roiproposals(objs, self.device)# Change this later

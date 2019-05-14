@@ -28,7 +28,11 @@ class BottomUpGCN(nn.Module):
 		if args.reduce_img_feats:
 			n_img_feats = args.rel_emb_dim
 			self.img_redn_layer = nn.Sequential(
-					nn.Conv2d(args.n_img_feats, args.rel_emb_dim, 3, padding=1),
+					nn.Conv2d(args.n_img_feats, 1024, 3, padding=1),
+					nn.ReLU(),
+					nn.Conv2d(1024, args.rel_emb_dim, 3, padding=1),
+					nn.ReLU(),
+					nn.Conv2d(args.rel_emb_dim, args.rel_emb_dim, 3, padding=1),
 					nn.ReLU()
 				)
 		else:
