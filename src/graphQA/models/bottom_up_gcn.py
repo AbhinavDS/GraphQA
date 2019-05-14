@@ -23,9 +23,9 @@ class BottomUpGCN(nn.Module):
 	def __init__(self, args, word2vec=None, rel_word2vec=None, obj_name_word2vec=None):
 
 		super(BottomUpGCN, self).__init__()
-		self.args = args
+
 		if args.reduce_img_feats:
-			self.reduce_img_feats = self.args.reduce_img_feats
+			self.reduce_img_feats = args.reduce_img_feats
 			n_img_feats = args.rel_emb_dim
 			self.img_redn_layer = nn.Sequential(
 					nn.Conv2d(args.n_img_feats, args.rel_emb_dim, 3, padding=1),
