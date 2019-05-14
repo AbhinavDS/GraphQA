@@ -28,9 +28,9 @@ class TopDownAttention(nn.Module):
 		self.reduce_img_feats = args.reduce_img_feats
 
 		if self.reduce_img_feats:
-			n_img_feats = self.args.rel_emb_dim
+			n_img_feats = args.rel_emb_dim
 		else:
-			n_img_feats = self.args.n_img_feats
+			n_img_feats = args.n_img_feats
 
 		if self.use_img_feats:
 			self.img_size = (args.pool_w, args.pool_h)

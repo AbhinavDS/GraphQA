@@ -31,10 +31,7 @@ class GQADataset(Dataset):
 		with open(valid_img_ids_path, 'r') as vf:
 			self.valid_img_ids = json.load(vf)
 
-		if args.mode != 'eval':
-			self.questions_keys = list([qk for qk in self.questions.keys() if self.questions[qk]['imageId'] in self.valid_img_ids])
-		else:
-			self.questions_keys = list(self.questions.keys())			
+		self.questions_keys = list([qk for qk in self.questions.keys() if self.questions[qk]['imageId'] in self.valid_img_ids])	
 		
 		with open(scene_graph_json_path, 'r') as sgf:
 			self.scene_graphs = json.load(sgf)
