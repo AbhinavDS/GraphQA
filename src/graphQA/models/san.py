@@ -64,7 +64,7 @@ class SAN(nn.Module):
 		self.nl = args.nl
 
 		self.obj_proj = NonLinearity(obj_feats_sz, self.san_dim_in, self.nl, self.drop_prob)
-		self.attn_layers = nn.ModuleList([StackedAttention(self.san_dim_in, self.san_dim_mid, self.drop_prob, self.device)] * self.n_attn_layers)
+		self.attn_layers = nn.ModuleList([StackedAttention(args, self.san_dim_in, self.san_dim_mid, self.drop_prob, self.device)] * self.n_attn_layers)
 		
 		# Can be replaced by changing the output dimension of the Question Encoder itself. Discuss this
 		if args.bidirectional:
@@ -74,7 +74,7 @@ class SAN(nn.Module):
 
 		self.ans_linear = wn(nn.Linear(args.san_dim_in, args.n_ans))
 
-	def forward(self, img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds):
+	def forward(self, img_feats, ques, objs, adj_mat, ques_lens, num_obj, obj_wrds, obj_region_mask):
 
 		"""
 		@param img_feats: The image features for the corresponding image of each sample. (batch_size, n_channels, width, height)
@@ -118,8 +118,8 @@ class SAN(nn.Module):
 			obj_mask[:, i] = (i >= num_obj)
 
 		for attn_layer in self.attn_layers:
-			ques_emb = attn_layer(gcn_obj_feats, ques_emb, obj_mask)
+			ques_emb, pred_attn_mask, attn_wt = attn_layer(gcn_obj_feats, ques_emb, obj_mask, obj_region_mask)
 
 		ans_output = self.ans_linear(self.dropout_layer(ques_emb))
 
-		return ans_output
+		return ans_output, pred_attn_mask, attn_wt

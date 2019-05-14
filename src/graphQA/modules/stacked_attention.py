@@ -8,7 +8,7 @@ from torch.nn.utils.weight_norm import weight_norm as wn
 
 class StackedAttention(nn.Module):
 
-	def __init__(self, san_dim_in, san_dim_mid, drop_prob, device):
+	def __init__(self, args, san_dim_in, san_dim_mid, drop_prob, device):
 
 		super(StackedAttention, self).__init__()
 		self.device = device
@@ -19,13 +19,15 @@ class StackedAttention(nn.Module):
 		self.dropout_layer = nn.Dropout(p=drop_prob)
 		self.tanh = nn.Tanh()
 		self.attn_softmax = nn.Softmax(dim=1)
+		self.max_num_objs = args.max_num_objs
+		
 
-	def forward(self, obj_feats, ques_emb, obj_mask):
+	def forward(self, obj_feats, ques_emb, obj_mask, obj_region_mask):
 
 		"""
 		Perform attention for one layer in overall stack of attentions
 		"""
-
+		
 		img_proj = self.ff_image(obj_feats)
 		ques_proj = self.ff_ques(ques_emb).unsqueeze(dim=1)
 
@@ -38,4 +40,7 @@ class StackedAttention(nn.Module):
 		attended_feats = torch.bmm(attn_wt.unsqueeze(1), obj_feats).squeeze(1) 
 		query = attended_feats + ques_emb
 
-		return query
+		batch_sz = ques_emb.size(0)
+		pred_attn_mask = torch.bmm(attn_wt.unsqueeze(1), obj_region_mask.view(batch_sz, self.max_num_objs, -1)).squeeze(1).view(batch_sz, obj_region_mask.size(-2), obj_region_mask.size(-1))
+
+		return query, pred_attn_mask, attn_wt
