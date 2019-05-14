@@ -297,6 +297,6 @@ class GQADataset(Dataset):
 		if self.args.opt_met:
 			data_obj['valid_ans'] = valid_ans_mat
 			data_obj['plausible_ans'] = plausible_ans_mat
-		if self.args.rel_probs or self.args.use_rel_probs_sum:
+		if self.args.use_rel_probs or self.args.use_rel_probs_sum:
 			data_obj['P'] = torch.as_tensor(P, dtype=torch.float),
 		return data_obj
