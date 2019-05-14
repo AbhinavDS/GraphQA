@@ -40,7 +40,7 @@ class BottomUpGCN(nn.Module):
 			self.img_gate = NonLinearity(args.obj_emb_dim, args.n_qi_gate, args.nl,args.drop_prob)
 		elif args.use_rel_words:
 
-			if args.use_rel_probs or args.use_rel_words_sum:
+			if args.use_rel_probs or args.use_rel_probs_sum:
 				self.gcn = GCNProbRelWords(args, rel_word2vec=rel_word2vec, obj_name_word2vec=obj_name_word2vec)
 			else:
 				self.gcn = GCNRelWords(args, rel_word2vec=rel_word2vec, obj_name_word2vec=obj_name_word2vec)

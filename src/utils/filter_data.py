@@ -20,7 +20,7 @@ def get_args():
 	parser.add_argument('--inp_qa_data_dir', type=str, help="Path to the data directory where the QA json file is stored")
 	parser.add_argument('--inp_sg_data_dir', type=str, help="Path to the data directory where the Scene Graph json files are stored")
 	parser.add_argument('--out_data_dir', type=str, help="Path of the directory where the filtered data will be stored")
-	parser.add_argument('--pct', type=int, help="Percentage of original to be used")
+	parser.add_argument('--pct', type=float, help="Percentage of original to be used")
 	parser.add_argument('--choices', type=str, required=True, help="The path to val choices file that will be used for evaluating metrics other than accuracy")
 
 	return parser.parse_args()
