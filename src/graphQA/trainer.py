@@ -164,8 +164,6 @@ class Trainer:
 						print('Train Epoch: {0:}, Iteration: {1:}, Total Loss: {2:.3f}, AL: {3:.3f}, VL: {4:.3f}, PL: {5:.3f}, GL: {6:.3f}'.format(epoch, i, batch_loss.data, accur_loss, valid_loss.data, plaus_loss.data, ground_loss.data))
 					else:
 						print('Train Epoch: {}, Iteration: {}, Loss: {}'.format(epoch, i, batch_loss.data))
-				break
-
 			train_acc = np.mean(train_accuracies)
 			
 			val_loss, val_acc = self.eval()
@@ -180,7 +178,6 @@ class Trainer:
 				print ('Not saving as best model.')
 			self.save_ckpt(save_best=(val_acc==self.best_val_acc))
 			self.write_status(epoch, self.best_val_acc)
-			
 	
 	def eval(self):
 
@@ -238,7 +235,6 @@ class Trainer:
 			loss += batch_loss.data
 
 			accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
-			break
 
 		if self.args.opt_met:
 			print('Validity: {}, Plausibility: {}'.format(float(valid_total/samples), float(plausible_total/samples)))

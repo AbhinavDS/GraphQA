@@ -71,8 +71,8 @@ class Evaluator:
 
 			if self.args.use_rel_probs or self.args.use_rel_probs_sum:
 					rel_prob_mat = batch['P'].to(self.device)[sorted_indices]
-				else:
-					rel_prob_mat = None
+			else:
+				rel_prob_mat = None
 
 			if self.args.opt_met:
 				valid_ans = batch['valid_ans'].to(self.device)[sorted_indices]
@@ -93,7 +93,6 @@ class Evaluator:
 
 			acc = np.mean(accuracies)
 			print("After Batch: {}, Evaluation Accuracy: {}".format(i+1, acc))
-			break
 
 			if self.args.opt_met:
 				print('Validity: {}, Plausibility: {}'.format(float(valid_total/samples), float(plausible_total/samples)))
