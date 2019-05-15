@@ -69,11 +69,16 @@ class Evaluator:
 			obj_region_mask = batch['obj_region_mask'].to(self.device)[sorted_indices]
 			attn_mask = batch['attn_mask'].to(self.device)[sorted_indices]
 
+			if self.args.use_rel_probs or self.args.use_rel_probs_sum:
+					rel_prob_mat = batch['P'].to(self.device)[sorted_indices]
+				else:
+					rel_prob_mat = None
+
 			if self.args.opt_met:
 				valid_ans = batch['valid_ans'].to(self.device)[sorted_indices]
 				plausible_ans = batch['plausible_ans'].to(self.device)[sorted_indices]
 
-			ans_distrib, pred_attn_mask, attn_wt = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_objs, obj_wrds, obj_region_mask)
+			ans_distrib, pred_attn_mask, attn_wt = self.model(img_feats, ques, objs, adj_mat, ques_lens, num_objs, obj_wrds, obj_region_mask, rel_prob_mat)
 			
 			accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
 
