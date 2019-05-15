@@ -88,6 +88,7 @@ class Evaluator:
 
 			acc = np.mean(accuracies)
 			print("After Batch: {}, Evaluation Accuracy: {}".format(i+1, acc))
+			break
 
 			if self.args.opt_met:
 				print('Validity: {}, Plausibility: {}'.format(float(valid_total/samples), float(plausible_total/samples)))

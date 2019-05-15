@@ -238,6 +238,7 @@ class Trainer:
 			loss += batch_loss.data
 
 			accuracies.extend(self.get_accuracy(ans_distrib, ans_output))
+			break
 
 		if self.args.opt_met:
 			print('Validity: {}, Plausibility: {}'.format(float(valid_total/samples), float(plausible_total/samples)))
